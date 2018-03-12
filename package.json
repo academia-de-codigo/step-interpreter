@@ -1,0 +1,17 @@
+{
+  "name": "js-interpreter",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "acorn": "^5.5.3",
+    "escodegen": "^1.9.1",
+    "esprima": "^4.0.0",
+    "estraverse": "^4.2.0"
+  }
+}
