@@ -1,12 +1,13 @@
 {
-  "name": "js-interpreter",
+  "name": "step-interpreter",
   "version": "0.0.1",
-  "description": "",
+  "description": "Executes code in a (unsafe) sandboxed environment, instruction by instruction, with configurable speed.",
   "main": "index.js",
+  "repository": "https://github.com/academia-de-codigo/step-interpreter",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "<Academia de Código _>",
   "license": "ISC",
   "dependencies": {
     "acorn": "^5.5.3",
