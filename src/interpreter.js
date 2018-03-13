@@ -10,7 +10,7 @@ const {
 
 class Interpreter {
     constructor(options = {}) {
-        this.stepper = stepper(options.interval || 500);
+        this.stepper = stepper(options.interval);
 
         this.context = vm.createContext({
             step: this.stepper
@@ -20,6 +20,7 @@ class Interpreter {
     /**
      * Exposes a group of named values to the interpreter.
      * Each value on the object will be referenced by it's property name on the interpreter global object
+     * Existing values with the same name will be overwritten
      * @param {Object} anything an object to expose {name: value}
      */
     expose(anything) {
@@ -49,7 +50,7 @@ class Interpreter {
      * @returns {Function} an unsubscribing function. call it, and you won't hear from us again.
      */
     addStepper(stepFn, context) {
-        return this.stepper.addExternalStepper(stepFn.bind(context));
+        return this.stepper.subscribe(stepFn.bind(context));
     }
 
     /**
@@ -61,6 +62,27 @@ class Interpreter {
     }
 
     /**
+     * Returns true if the interpreter is paused
+     */
+    isPaused() {
+        return this.stepper.isPaused();
+    }
+
+    /**
+     * Pauses the interpreter
+     */
+    pause() {
+        this.stepper.pause();
+    }
+
+    /**
+     * Resumes the interpreter
+     */
+    resume() {
+        this.stepper.resume();
+    }
+
+    /**
      * Runs a piece of code in a sandboxed (not totally) environment,
      * with access to every value that this interpreter been exposed to
      * @param {String} code the code to run
@@ -68,28 +90,66 @@ class Interpreter {
      */
     async run(code) {
         code = generate(makeAsync(injectCalls(parse(code), 'step')));
+        console.log('-------------CODE--------------');
+        console.log(code);
+        console.log('-------------------------------');
         return vm.runInContext(code, this.context);
     }
 }
 
 module.exports = Interpreter;
 
-function stepper(interval = 1, externalSteppers = []) {
+function stepper(interval = 500) {
+    let paused;
+    let resume;
+    let subscribers = [];
+
     const stepFn = async nextExpression => {
-        externalSteppers.forEach(fn => fn(nextExpression));
-        await sleep(interval);
+        const pausedPromise = () =>
+            new Promise(resolve => {
+                if (paused) {
+                    resume = resolve;
+                    return;
+                }
+
+                resolve();
+            });
+
+        await Promise.all([
+            pausedPromise(),
+            sleep(interval).then(() => {
+                return pausedPromise();
+            })
+        ]);
+
+        subscribers.forEach(fn => fn(nextExpression));
     };
 
-    stepFn.setInterval = seconds => {
-        interval = seconds;
+    stepFn.resume = () => {
+        if (!resume) {
+            return;
+        }
+
+        resume();
+        resume = null;
+        paused = false;
     };
 
-    stepFn.addExternalStepper = fn => {
-        externalSteppers.push(fn);
+    stepFn.pause = () => {
+        console.log('pausing...');
+        paused = true;
+    };
+
+    stepFn.subscribe = fn => {
+        subscribers.push(fn);
 
         return () => {
-            externalSteppers = externalSteppers.filter(cb => cb !== fn);
+            subscribers = subscribers.filter(cb => cb !== fn);
         };
+    };
+
+    stepFn.setInterval = ms => {
+        interval = ms;
     };
 
     return stepFn;

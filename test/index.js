@@ -27,6 +27,10 @@ const code = `
         console.log('hello');
     }
 
+    this.cb = function() {
+        console.log('i am a cb');
+    }
+
 `;
 
 async function run() {
@@ -45,7 +49,15 @@ async function run() {
         defer: setTimeout
     });
 
-    setTimeout(unsubscribe, 5000);
+    setTimeout(() => {
+        console.log('pausing interpreter...');
+        interpreter.pause();
+    }, 3000);
+    setTimeout(() => {
+        console.log('resuming interpreter...');
+        interpreter.resume();
+    }, 5000);
+
     await interpreter.run(code);
     console.log('done');
 }
