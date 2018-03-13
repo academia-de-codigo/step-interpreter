@@ -6,7 +6,7 @@ const parse = (source, options) =>
     acorn.parse(source, {
         ecmaVersion: 8,
         allowReturnOutsideFunction: true,
-        ...options
+        ...options,
     });
 
 /**
@@ -60,15 +60,10 @@ exports.injectCalls = function(ast, fnName) {
 
             const steppedBody = node.body.reduce((body, child) => {
                 const sanitizedNextNode = exports.removeCalls(child, fnName);
-                const call = `${fnName}(\`${escodegen.generate(
-                    sanitizedNextNode
-                )}\`);`;
+                const call = `${fnName}(\`${escodegen.generate(sanitizedNextNode)}\`);`;
                 const parsedCall = parse(call).body[0];
 
-                if (
-                    child.type === 'FunctionDeclaration' ||
-                    child.type === 'FunctionExpression'
-                ) {
+                if (child.type === 'FunctionDeclaration' || child.type === 'FunctionExpression') {
                     return [...body, child];
                 }
 
@@ -76,7 +71,7 @@ exports.injectCalls = function(ast, fnName) {
             }, []);
 
             return { ...node, body: steppedBody };
-        }
+        },
     });
 };
 
@@ -97,7 +92,7 @@ exports.removeCalls = function(ast, fnName) {
             ) {
                 this.remove();
             }
-        }
+        },
     });
 };
 
@@ -113,27 +108,21 @@ exports.makeAsync = function(ast) {
     return estraverse.replace(parse(source), {
         /* eslint-disable consistent-return */
         enter(node) {
-            if (
-                node.type === 'FunctionDeclaration' ||
-                node.type === 'FunctionExpression'
-            ) {
+            if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
                 return { ...node, async: true };
             }
         },
         leave(node, parent) {
-            if (
-                node.type === 'CallExpression' &&
-                node.callee.type === 'FunctionExpression'
-            ) {
+            if (node.type === 'CallExpression' && node.callee.type === 'FunctionExpression') {
                 return;
             }
 
             if (node.type === 'CallExpression') {
                 return {
                     type: 'AwaitExpression',
-                    argument: node
+                    argument: node,
                 };
             }
-        }
+        },
     });
 };

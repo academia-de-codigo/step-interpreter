@@ -1,9 +1,10 @@
+/* eslint-disable no-console */
 const Interpreter = require('../src/interpreter');
-const interpreter = new Interpreter();
 
 const code = `
     const a = 1;
     const b = 2;
+    slower();
     const s = sum(a, b);
     console.log(s);
 
@@ -14,10 +15,9 @@ const code = `
     for (let i = 0; i < 5; i++) {
         console.log('inside for, i:', i);
     }
-    slower();
 
     console.log('for is done');
-    defer(sayHello, 1000);
+    defer(sayHello, 2000);
 
     function sum(a, b) {
         return a + b;
@@ -27,16 +27,16 @@ const code = `
         console.log('hello');
     }
 
-    this.cb = function() {
-        console.log('i am a cb');
+    this.printer = function(string) {
+        console.log('I print I print:', string);
     }
 
+    console.log('done inside interpreter');
 `;
 
 async function run() {
-    const unsubscribe = interpreter.addStepper(code =>
-        console.log('going to run....', code)
-    );
+    const interpreter = new Interpreter();
+    const unsubscribe = interpreter.addStepper(code => console.log('going to run....', code));
 
     interpreter.expose({
         console,
@@ -46,20 +46,23 @@ async function run() {
         slower: () => {
             interpreter.setStepInterval(1000);
         },
-        defer: setTimeout
+        defer: setTimeout,
     });
 
     setTimeout(() => {
         console.log('pausing interpreter...');
         interpreter.pause();
-    }, 3000);
-    setTimeout(() => {
-        console.log('resuming interpreter...');
-        interpreter.resume();
     }, 5000);
 
+    setTimeout(() => {
+        console.log('unsubscribing stepper...');
+        unsubscribe();
+        console.log('resuming interpreter...');
+        interpreter.resume();
+    }, 7000);
+
     await interpreter.run(code);
-    console.log('done');
+    interpreter.read('printer')('OUTSIDE INTERPRETER: DONE!');
 }
 
 run();

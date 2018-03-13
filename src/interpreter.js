@@ -1,10 +1,7 @@
 const vm = require('vm');
+const stepper = require('./stepper');
 const {
-    injectCalls,
-    removeCalls,
-    parse,
-    generate,
-    makeAsync
+    injectCalls, parse, generate, makeAsync,
 } = require('./code-transformer');
 
 // TODO: JS-Doc for the class
@@ -13,14 +10,14 @@ class Interpreter {
         this.stepper = stepper(options.interval);
 
         this.context = vm.createContext({
-            step: this.stepper
+            step: this.stepper,
         });
     }
 
     /**
      * Exposes a group of named values to the interpreter.
-     * Each value on the object will be referenced by it's property name on the interpreter global object
-     * Existing values with the same name will be overwritten
+     * Each value on the object will be referenced by it's property name on the interpreter
+     * global object. Existing values with the same name will be overwritten
      * @param {Object} anything an object to expose {name: value}
      */
     expose(anything) {
@@ -28,7 +25,7 @@ class Interpreter {
             throw new Error('Argument needs to be an object');
         }
 
-        Object.keys(anything).forEach(key => {
+        Object.keys(anything).forEach((key) => {
             this.context[key] = anything[key];
         });
     }
@@ -58,28 +55,28 @@ class Interpreter {
      * @param {Number} ms the step interval in milliseconds
      */
     setStepInterval(ms) {
-        this.stepper.setInterval(ms);
+        this.stepper.setSleepTime(ms);
     }
 
     /**
      * Returns true if the interpreter is paused
      */
     isPaused() {
-        return this.stepper.isPaused();
+        return this.stepper.isLocked();
     }
 
     /**
      * Pauses the interpreter
      */
     pause() {
-        this.stepper.pause();
+        this.stepper.lock();
     }
 
     /**
      * Resumes the interpreter
      */
     resume() {
-        this.stepper.resume();
+        this.stepper.unlock();
     }
 
     /**
@@ -89,56 +86,9 @@ class Interpreter {
      * @returns {Promise} a promise that will be fulfilled when the code has finished running
      */
     async run(code) {
-        code = generate(makeAsync(injectCalls(parse(code), 'step')));
-        return vm.runInContext(code, this.context);
+        const transformedCode = generate(makeAsync(injectCalls(parse(code), 'step')));
+        return vm.runInContext(transformedCode, this.context);
     }
 }
 
 module.exports = Interpreter;
-
-function stepper(interval = 500) {
-    let lock;
-    let unlocker;
-    let subscribers = [];
-
-    const stepFn = async nextExpression => {
-        await sleep(interval);
-        await lock;
-
-        subscribers.forEach(fn => fn(nextExpression));
-    };
-
-    stepFn.resume = () => {
-        if (!unlocker) {
-            return;
-        }
-
-        unlocker();
-        unlocker = null;
-        paused = false;
-    };
-
-    stepFn.pause = () => {
-        lock = new Promise(resolve => {
-            unlocker = resolve;
-        });
-    };
-
-    stepFn.subscribe = fn => {
-        subscribers.push(fn);
-
-        return () => {
-            subscribers = subscribers.filter(cb => cb !== fn);
-        };
-    };
-
-    stepFn.setInterval = ms => {
-        interval = ms;
-    };
-
-    return stepFn;
-}
-
-async function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
