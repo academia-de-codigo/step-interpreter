@@ -4,10 +4,10 @@ const {
     removeCalls,
     parse,
     generate,
-    makeAsync,
-    makeSync
+    makeAsync
 } = require('./code-transformer');
 
+// TODO: JS-Doc for the class
 class Interpreter {
     constructor(options = {}) {
         this.stepper = stepper(options.interval);
@@ -90,9 +90,6 @@ class Interpreter {
      */
     async run(code) {
         code = generate(makeAsync(injectCalls(parse(code), 'step')));
-        console.log('-------------CODE--------------');
-        console.log(code);
-        console.log('-------------------------------');
         return vm.runInContext(code, this.context);
     }
 }
@@ -100,44 +97,31 @@ class Interpreter {
 module.exports = Interpreter;
 
 function stepper(interval = 500) {
-    let paused;
-    let resume;
+    let lock;
+    let unlocker;
     let subscribers = [];
 
     const stepFn = async nextExpression => {
-        const pausedPromise = () =>
-            new Promise(resolve => {
-                if (paused) {
-                    resume = resolve;
-                    return;
-                }
-
-                resolve();
-            });
-
-        await Promise.all([
-            pausedPromise(),
-            sleep(interval).then(() => {
-                return pausedPromise();
-            })
-        ]);
+        await sleep(interval);
+        await lock;
 
         subscribers.forEach(fn => fn(nextExpression));
     };
 
     stepFn.resume = () => {
-        if (!resume) {
+        if (!unlocker) {
             return;
         }
 
-        resume();
-        resume = null;
+        unlocker();
+        unlocker = null;
         paused = false;
     };
 
     stepFn.pause = () => {
-        console.log('pausing...');
-        paused = true;
+        lock = new Promise(resolve => {
+            unlocker = resolve;
+        });
     };
 
     stepFn.subscribe = fn => {

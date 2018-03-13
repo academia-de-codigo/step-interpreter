@@ -18,10 +18,20 @@ exports.format = function(source) {
     return escodegen.generate(parse(source));
 };
 
+/**
+ * Parses the source code into an AST using acorn
+ * @param {String} source source code
+ * @returns {Object} the abstract syntax tree
+ */
 exports.parse = function(source) {
     return parse(source);
 };
 
+/**
+ * Generates source code from an AST using escodegen
+ * @param {Object} ast an abstract syntax tree
+ * @returns {String} pretty source code
+ */
 exports.generate = function(ast) {
     return escodegen.generate(ast);
 };
@@ -122,48 +132,6 @@ exports.makeAsync = function(ast) {
                 return {
                     type: 'AwaitExpression',
                     argument: node
-                };
-            }
-        }
-    });
-};
-
-/**
- * Makes all the code synchronous, removing every async modifier from function declaration,
- * and any await expression before a function call
- * @param {Object} ast ast
- * @returns {Object} modified ast
- */
-exports.makeSync = function(ast) {
-    ast = exports.clone(escodegen.generate(ast));
-    return estraverse.replace(ast, {
-        leave(node, parent) {
-            if (node.body && Array.isArray(node.body)) {
-                const body = node.body.reduce((body, child) => {
-                    if (
-                        child.type === 'ExpressionStatement' &&
-                        child.expression.type === 'CallExpression' &&
-                        child.expression.callee.type === 'FunctionExpression'
-                    ) {
-                        return [...body, ...child.expression.callee.body.body];
-                    }
-
-                    return [...body, child];
-                }, []);
-
-                return { ...node, body };
-            }
-
-            if (
-                node.type === 'FunctionDeclaration' ||
-                node.type === 'FunctionExpression'
-            ) {
-                return { ...node, async: false };
-            }
-
-            if (node.type === 'AwaitExpression') {
-                return {
-                    ...node.argument
                 };
             }
         }
