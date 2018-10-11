@@ -36,7 +36,7 @@ const code = `
 
 async function run() {
     const interpreter = new Interpreter();
-    const unsubscribe = interpreter.addStepper(code => console.log('going to run....', code));
+    const unsubscribe = interpreter.addStepper(snippet => console.log('going to run....', snippet));
 
     interpreter.expose({
         console,
