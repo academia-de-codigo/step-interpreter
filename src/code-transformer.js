@@ -122,7 +122,9 @@ function makeAsync(ast) {
 
     return estraverse.replace(acornParse(source), {
         enter(node) {
-            if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
+            if (
+                ['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type)
+            ) {
                 return { ...node, async: true };
             }
         },
