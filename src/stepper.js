@@ -1,69 +1,53 @@
-module.exports = getStepper;
+class Stepper {
+    constructor(options = {}) {
+        this.sleepTime = options.sleepTime || 500;
+        this.subscribers = [];
+    }
 
-/**
- * A stepper factory. It returns a function that will be called by
- * the interpreter between each expression. It is able to halt
- * and resume vm's code execution.
- * @param {*} interval stepper sleep interval
- */
-function getStepper(sleepTime = 500) {
-    let lock;
-    let unlocker;
-    let subscribers = [];
+    async step(expression) {
+        await sleep(this.sleepTime);
+        await this.lock;
+        await Promise.all(this.subscribers.map(subscriber =>
+            subscriber.handler.call(subscriber.context, expression)));
+    }
 
-    const stepper = async (nextExpression) => {
-        await sleep(sleepTime);
-        await lock;
+    pause() {
+        this.lock = new Promise((resolve) => {
+            this.unlocker = resolve;
+        });
+    }
 
-        subscribers.forEach(fn => fn(nextExpression));
-    };
+    resume() {
+        this.unlocker();
+        this.unlocker = null;
+    }
 
-    /**
-     * Unlocks the stepper function
-     */
-    stepper.unlock = () => {
-        if (!unlocker) {
+    unsubscribe(handler, context) {
+        this.subscribers = this.subscribers.filter(subscriber => handler !== subscriber.handler && context !== subscriber.context);
+    }
+
+    subscribe(handler, context) {
+        this.subscribers.push({ handler, context });
+
+        return () => {
+            this.unsubscribe(handler, context);
+        };
+    }
+
+    setSleepTime(ms) {
+        if (!Number.isFinite(ms)) {
             return;
         }
 
-        unlocker();
-        unlocker = null;
-    };
+        this.sleepTime = ms;
+    }
 
-    /**
-     * Locks the stepper function
-     */
-    stepper.lock = () => {
-        lock = new Promise((resolve) => {
-            unlocker = resolve;
-        });
-    };
-
-    /**
-     * Subscribe to the stepper. This function will be called after every step sleep
-     * @param {Function} fn subscriber
-     * @returns {Function} unsubscribing function
-     */
-    stepper.subscribe = (fn) => {
-        subscribers.push(fn);
-
-        return () => {
-            subscribers = subscribers.filter(cb => cb !== fn);
-        };
-    };
-
-    /**
-     * Sets the sleep time of the stepper
-     * @param {Number} ms interval in miliseconds
-     */
-    stepper.setSleepTime = (ms) => {
-        sleepTime = ms; // eslint-disable-line no-param-reassign
-    };
-
-    stepper.isLocked = () => !!unlocker;
-
-    return stepper;
+    isLocked() {
+        return !!this.unlocker;
+    }
 }
+
+module.exports = Stepper;
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

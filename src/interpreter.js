@@ -1,25 +1,22 @@
 const vm = require('vm');
-const stepper = require('./stepper');
+const Stepper = require('./stepper');
+
 const {
     injectCalls, parse, generate, makeAsync,
 } = require('./code-transformer');
 
 // TODO: JS-Doc for the class
 class Interpreter {
-    constructor(options = {}) {
-        this.stepper = stepper(options.interval);
-
+    constructor(code = '', context = {}, options = {}) {
+        this.stepper = new Stepper(options);
+        this.code = code;
         this.context = vm.createContext({
-            step: this.stepper,
+            ...context,
+            step: this.stepper.step.bind(this.stepper),
+            console,
         });
     }
 
-    /**
-     * Exposes a group of named values to the interpreter.
-     * Each value on the object will be referenced by it's property name on the interpreter
-     * global object. Existing values with the same name will be overwritten
-     * @param {Object} anything an object to expose {name: value}
-     */
     expose(anything) {
         if (typeof anything !== 'object') {
             throw new Error('Argument needs to be an object');
@@ -30,63 +27,33 @@ class Interpreter {
         });
     }
 
-    /**
-     * Grabs a value from the interpreter's global object
-     * @param {String} name the name in which the value has been stored
-     * @returns {Anything} the value
-     */
     read(name) {
         return this.context[name];
     }
 
-    /**
-     * Enqueues a function in the interpreter stepper. This function will be called on every
-     * interpreter step with a stringified version of the code that the will be run next
-     * @param {Function} stepFn the function to enqueue
-     * @param {Object} context the context in which the function will be called (aka this)
-     * @returns {Function} an unsubscribing function. call it, and you won't hear from us again.
-     */
-    addStepper(stepFn, context) {
-        return this.stepper.subscribe(stepFn.bind(context));
+    pause() {
+        this.stepper.pause();
     }
 
-    /**
-     * Sets the step interval between every instruction
-     * @param {Number} ms the step interval in milliseconds
-     */
+    resume() {
+        this.stepper.resume();
+    }
+
+    onStep(handler, context) {
+        this.stepper.subscribe(handler, context);
+    }
+
     setStepInterval(ms) {
         this.stepper.setSleepTime(ms);
     }
 
-    /**
-     * Returns true if the interpreter is paused
-     */
-    isPaused() {
-        return this.stepper.isLocked();
-    }
+    async run() {
+        if (this.executed) {
+            return Promise.resolve();
+        }
 
-    /**
-     * Pauses the interpreter
-     */
-    pause() {
-        this.stepper.lock();
-    }
-
-    /**
-     * Resumes the interpreter
-     */
-    resume() {
-        this.stepper.unlock();
-    }
-
-    /**
-     * Runs a piece of code in a sandboxed (not totally) environment,
-     * with access to every value that this interpreter been exposed to
-     * @param {String} code the code to run
-     * @returns {Promise} a promise that will be fulfilled when the code has finished running
-     */
-    async run(code) {
-        const transformedCode = generate(makeAsync(injectCalls(parse(code), 'step')));
+        this.executed = true;
+        const transformedCode = generate(makeAsync(injectCalls(parse(this.code), 'step')));
         return vm.runInContext(transformedCode, this.context);
     }
 }
