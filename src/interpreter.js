@@ -1,5 +1,6 @@
 const vm = require('vm');
 const Stepper = require('./stepper');
+const { createInterpreterEvents } = require('./events');
 
 const {
     injectCalls, parse, generate, makeAsync,
@@ -7,12 +8,12 @@ const {
 
 // TODO: JS-Doc for the class
 class Interpreter {
-    constructor(code = '', context = {}, options = {}) {
+    constructor(context = {}, options = {}) {
         this.stepper = new Stepper(options);
-        this.code = code;
         this.context = vm.createContext({
             ...context,
-            step: this.stepper.step.bind(this.stepper),
+            ...createInterpreterEvents(),
+            step: (...args) => this.stepper.step(...args),
             console,
         });
     }
@@ -27,6 +28,18 @@ class Interpreter {
         });
     }
 
+    emit(event) {
+        this.context.emit(event);
+    }
+
+    on(event) {
+        this.context.on(event);
+    }
+
+    once(event) {
+        this.context.once(event);
+    }
+
     read(name) {
         return this.context[name];
     }
@@ -39,6 +52,11 @@ class Interpreter {
         this.stepper.resume();
     }
 
+    stop() {
+        this.pause();
+        this.endTrigger.cancel();
+    }
+
     onStep(handler, context) {
         this.stepper.subscribe(handler, context);
     }
@@ -47,15 +65,33 @@ class Interpreter {
         this.stepper.setSleepTime(ms);
     }
 
-    async run() {
-        if (this.executed) {
-            return Promise.resolve();
+    async run(code) {
+        if (this.running) {
+            return;
         }
 
-        this.executed = true;
-        const transformedCode = generate(makeAsync(injectCalls(parse(this.code), 'step')));
-        return vm.runInContext(transformedCode, this.context);
+        const transformedCode = generate(makeAsync(injectCalls(parse(code), 'step')));
+
+        this.running = true;
+        await vm.runInContext(transformedCode, this.context);
+        await endTrigger(this.context);
+        this.running = false;
     }
 }
 
 module.exports = Interpreter;
+
+function endTrigger(context) {
+    return new Promise((resolve) => {
+        if (context.getAwaitingHandlers() === 0) {
+            resolve();
+            return;
+        }
+
+        context.onAwaitingHandlersChange(() => {
+            if (context.getAwaitingHandlers() === 0) {
+                resolve();
+            }
+        });
+    });
+}

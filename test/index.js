@@ -1,15 +1,7 @@
 /* eslint-disable no-console */
-const { execute } = require('../src');
+const Interpreter = require('../src');
 
 const code = `
-    once('run', () => {
-        console.log('i was run');
-    });
-
-    once('piriquito', () => {
-        console.log('piu piu');
-    });
-
     const a = 1;
     const b = 2;
     const s = sum(a, b);
@@ -40,10 +32,9 @@ const code = `
 `;
 
 async function run() {
-    const execution = execute(code);
-    execution.onFinish(() => console.log('REALLY FINISHED'));
-
-    setTimeout(() => execution.stop(), 5000);
+    const interpreter = new Interpreter();
+    await interpreter.run(code);
+    console.log('done outside interpreter!');
 }
 
 run();
