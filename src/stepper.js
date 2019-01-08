@@ -7,8 +7,9 @@ class Stepper {
     async step(expression) {
         await sleep(this.sleepTime);
         await this.lock;
-        await Promise.all(this.subscribers.map(subscriber =>
-            subscriber.handler.call(subscriber.context, expression)));
+        await Promise.all(
+            this.subscribers.map(subscriber => subscriber.handler.call(subscriber.context, expression)),
+        );
     }
 
     pause() {
@@ -23,7 +24,9 @@ class Stepper {
     }
 
     unsubscribe(handler, context) {
-        this.subscribers = this.subscribers.filter(subscriber => handler !== subscriber.handler && context !== subscriber.context);
+        this.subscribers = this.subscribers.filter(
+            subscriber => handler !== subscriber.handler && context !== subscriber.context,
+        );
     }
 
     subscribe(handler, context) {

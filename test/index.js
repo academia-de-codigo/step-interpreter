@@ -2,6 +2,9 @@
 const Interpreter = require('../src');
 
 const code = `
+    on('patxoca', () => {
+        console.log('patxoca');
+    })
     const a = 1;
     const b = 2;
     const s = sum(a, b);
@@ -33,6 +36,10 @@ const code = `
 
 async function run() {
     const interpreter = new Interpreter();
+    setTimeout(() => {
+        interpreter.pause();
+        setTimeout(() => interpreter.resume(), 5000);
+    }, 5000);
     await interpreter.run(code);
     console.log('done outside interpreter!');
 }

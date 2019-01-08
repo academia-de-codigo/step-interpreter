@@ -2,12 +2,11 @@ const escodegen = require('escodegen');
 const estraverse = require('estraverse');
 const acorn = require('acorn');
 
-const acornParse = (source, options) =>
-    acorn.parse(source, {
-        ecmaVersion: 8,
-        allowReturnOutsideFunction: true,
-        ...options,
-    });
+const acornParse = (source, options) => acorn.parse(source, {
+    ecmaVersion: 8,
+    allowReturnOutsideFunction: true,
+    ...options,
+});
 
 module.exports = {
     format,
@@ -100,9 +99,9 @@ function removeCalls(ast, fnName) {
     return estraverse.replace(ast, {
         enter(node) {
             if (
-                node.type === 'ExpressionStatement' &&
-                node.expression.type === 'CallExpression' &&
-                node.expression.callee.name === fnName
+                node.type === 'ExpressionStatement'
+                && node.expression.type === 'CallExpression'
+                && node.expression.callee.name === fnName
             ) {
                 this.remove();
             }
@@ -123,7 +122,9 @@ function makeAsync(ast) {
     return estraverse.replace(acornParse(source), {
         enter(node) {
             if (
-                ['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type)
+                ['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(
+                    node.type,
+                )
             ) {
                 return { ...node, async: true };
             }

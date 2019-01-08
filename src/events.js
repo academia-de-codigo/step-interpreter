@@ -29,6 +29,11 @@ function createInterpreterEvents() {
                 handlersSubscription.notify();
             });
         },
+        clearEvents(eventname) {
+            events.removeAllListeners(eventname);
+            awaitingHandlers = 0;
+            handlersSubscription.notify();
+        },
         emit(eventname) {
             events.emit(eventname);
         },

@@ -53,8 +53,13 @@ class Interpreter {
     }
 
     stop() {
+        if (!this.cancelPromise) {
+            return;
+        }
+
         this.pause();
-        this.endTrigger.cancel();
+        this.context.clearEvents();
+        this.cancelPromise();
     }
 
     onStep(handler, context) {
@@ -73,8 +78,16 @@ class Interpreter {
         const transformedCode = generate(makeAsync(injectCalls(parse(code), 'step')));
 
         this.running = true;
-        await vm.runInContext(transformedCode, this.context);
-        await endTrigger(this.context);
+        await Promise.race([
+            new Promise((resolve) => {
+                this.cancelPromise = resolve;
+            }),
+            new Promise(async (resolve) => {
+                await vm.runInContext(transformedCode, this.context);
+                await endTrigger(this.context);
+                resolve();
+            }),
+        ]);
         this.running = false;
     }
 }
