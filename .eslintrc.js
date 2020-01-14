@@ -5,7 +5,7 @@ module.exports = {
     },
     extends: [
         'eslint:recommended',
-        'plugin:jest/recommended',
+        'plugin:mocha/recommended',
         'plugin:prettier/recommended'
     ],
     globals: {
