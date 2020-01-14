@@ -1,16 +1,17 @@
 module.exports = {
-    extends: 'airbnb-base',
-    rules: {
-        indent: ['error', 4],
-        'no-param-reassign': 'off',
-        'no-use-before-define': ['error', { functions: false, classes: true }],
-        'space-before-function-paren': [
-            'error',
-            {
-                anonymous: 'never',
-                named: 'never',
-                asyncArrow: 'always'
-            }
-        ]
+    "env": {
+        "es6": true,
+        "node": true
+    },
+    "extends": ["eslint:recommended", "plugin:prettier/recommended"],
+    "globals": {
+        "Atomics": "readonly",
+        "SharedArrayBuffer": "readonly"
+    },
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "rules": {
     }
 };
