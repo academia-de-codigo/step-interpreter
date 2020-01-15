@@ -30,7 +30,6 @@ describe('interpreter', function() {
             await wait(50);
             await wait(50);
             await wait(50);
-            await wait(50);
 
             async function wait(ms) {
                 return new Promise(resolve => setTimeout(resolve, ms));

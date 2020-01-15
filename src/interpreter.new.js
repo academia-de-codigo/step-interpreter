@@ -49,7 +49,9 @@ class Context {
             step: (...args) => this.stepper.step(...args),
             stop: (...args) => this.stop(...args),
             pause: (...args) => this.pause(...args),
-            resume: (...args) => this.resume(...args)
+            resume: (...args) => this.resume(...args),
+            console: console,
+            context: this
         };
     }
 }
@@ -119,6 +121,7 @@ export function createInterpreter(code, options) {
         run: async () => interpreter.run(code),
         pause: () => interpreter.pause(),
         resume: () => interpreter.resume(),
-        stop: () => interpreter.stop()
+        stop: () => interpreter.stop(),
+        context: interpreter.context
     };
 }
