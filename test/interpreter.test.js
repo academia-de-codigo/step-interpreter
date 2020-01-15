@@ -54,6 +54,20 @@ describe('interpreter', function() {
             return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
+        it('.run() promise should never fulfill if execution is paused', async function() {
+            const code = `
+            await wait(50);
+
+            async function wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        `;
+            const interpreter = createInterpreter(code);
+            setTimeout(() => interpreter.pause(), 10);
+            setTimeout(() => interpreter.resume(), 200);
+            return expect(interpreter.run()).to.eventually.be.fulfilled;
+        });
+
         it('.run() should throw ReferenceError', async function() {
             const code = `
           const a = 1;
