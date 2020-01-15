@@ -1,3 +1,6 @@
-// eslint-disable-next-line no-global-assign
-require = require('esm')(module /*, options*/);
-module.exports = require('./src/interpreter.js');
+import { createInterpreter } from './src/interpreter';
+
+export { createInterpreter };
+
+const i = createInterpreter(`console.log('ho');`);
+i.run();

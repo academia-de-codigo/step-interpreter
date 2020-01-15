@@ -1,4 +1,4 @@
-import { transform as babelTransform } from '@babel/standalone';
+import Babel from '@babel/standalone';
 import asyncToGenerator from './async-to-generator-polyfill';
 
 const asyncWrapper = code => {
@@ -13,17 +13,17 @@ const asyncWrapper = code => {
 
 export function prepare(code, noStep) {
     if (noStep) {
-        return babelTransform(asyncWrapper(code), {
+        return Babel.transform(asyncWrapper(code), {
             presets: ['es2015'],
             plugins: [asyncToGenerator]
         }).code;
     }
 
-    const withSteps = babelTransform(asyncWrapper(code), {
+    const withSteps = Babel.transform(asyncWrapper(code), {
         plugins: [stepInjector]
     }).code;
 
-    return babelTransform(withSteps, {}).code;
+    return Babel.transform(withSteps, {}).code;
 }
 
 const syncWrapper = code => {
@@ -38,16 +38,16 @@ const syncWrapper = code => {
 
 export function prepareSync(code, noStep) {
     if (noStep) {
-        return babelTransform(syncWrapper(code), {
+        return Babel.transform(syncWrapper(code), {
             presets: ['es2015']
         }).code;
     }
 
-    const withSteps = babelTransform(syncWrapper(code), {
+    const withSteps = Babel.transform(syncWrapper(code), {
         plugins: [stepInjector]
     }).code;
 
-    return babelTransform(withSteps, {
+    return Babel.transform(withSteps, {
         presets: ['es2015']
     }).code;
 }

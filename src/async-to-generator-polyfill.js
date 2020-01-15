@@ -1,11 +1,11 @@
 /* *******
 this is taken from the official babel repo but with all the build-time node dependencies stripped out (---> fs)
 ******* */
-import { declare } from '@babel/helper-plugin-utils';
+import utils from '@babel/helper-plugin-utils';
 import remapAsyncToGenerator from '@babel/helper-remap-async-to-generator';
-import { addNamed } from '@babel/helper-module-imports';
+import moduleImports from '@babel/helper-module-imports';
 
-export default declare((api, options) => {
+export default utils.declare((api, options) => {
     api.assertVersion(7);
     const { types: t } = api;
 
@@ -23,8 +23,7 @@ export default declare((api, options) => {
                     if (wrapAsync) {
                         wrapAsync = t.cloneNode(wrapAsync);
                     } else {
-                        // eslint-disable-next-line
-                        wrapAsync = state.methodWrapper = addNamed(
+                        wrapAsync = state.methodWrapper = moduleImports.addNamed(
                             path,
                             method,
                             module
