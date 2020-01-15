@@ -2,7 +2,6 @@ import sinon from 'sinon';
 import chai, { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import sinonChai from 'sinon-chai';
-import { run } from '../src/interpreter';
 import { createInterpreter } from '../src/interpreter.new';
 
 chai.use(chaiAsPromised);
@@ -10,7 +9,7 @@ chai.use(sinonChai);
 
 describe('interpreter', function() {
     describe('execution', function() {
-        it('.run() should return a promise that fulfills when execution is terminated', async function() {
+        it('.run() should return a promise that fulfills when interpreter finishes executing the code', async function() {
             const code = `
           const a = 1;
           const b = 2;
@@ -21,27 +20,63 @@ describe('interpreter', function() {
           }
         `;
 
-            expect(run(code)).to.eventually.be.fulfilled;
+            const interpreter = createInterpreter(code);
+            return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
-        it('should throw ReferenceError', async function() {
+        it('.run() should return a promise that fulfills when execution is terminated by the user', async function() {
+            const code = `
+            await wait(50);
+            await wait(50);
+            await wait(50);
+            await wait(50);
+            await wait(50);
+
+            async function wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        `;
+
+            const interpreter = createInterpreter(code);
+            setTimeout(() => interpreter.stop(), 100);
+            return expect(interpreter.run(code)).to.eventually.be.fulfilled;
+        });
+
+        it('.run() should be able to execute async code top-level', async function() {
+            const code = `
+            await wait(100);
+
+            async function wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        `;
+
+            const interpreter = createInterpreter(code);
+            return expect(interpreter.run(code)).to.eventually.be.fulfilled;
+        });
+
+        it('.run() should throw ReferenceError', async function() {
             const code = `
           const a = 1;
           const b = a + badVariable;
         `;
 
-            return expect(run(code)).to.be.eventually.rejectedWith(
+            const interpreter = createInterpreter(code);
+            return expect(interpreter.run()).to.be.eventually.rejectedWith(
                 ReferenceError,
                 'badVariable'
             );
         });
 
-        it('should throw TypeError', async function() {
+        it('.run() should throw SyntaxError', async function() {
             const code = `
           const a =;
         `;
 
-            return expect(run(code)).to.be.eventually.rejectedWith(SyntaxError);
+            const interpreter = createInterpreter(code);
+            return expect(interpreter.run()).to.be.eventually.rejectedWith(
+                SyntaxError
+            );
         });
     });
     describe('events', function() {
@@ -72,24 +107,6 @@ describe('interpreter', function() {
 
             await interpreter.run();
             expect(callback).to.have.been.called;
-        });
-        it('should not call on.exit event if execution does not terminate', async function() {
-            const callback = sinon.fake();
-            const code = `
-            run().then(() => {
-                console.log('will never be printed');
-            })
-            
-            async function run() {
-                return new Promise(() => {});
-            }
-            `;
-
-            await run(code, {
-                onEnd: callback
-            });
-
-            expect(callback).to.not.have.been.called;
         });
     });
     describe('context tests', function() {

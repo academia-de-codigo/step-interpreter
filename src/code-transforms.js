@@ -23,10 +23,7 @@ export function prepare(code, noStep) {
         plugins: [stepInjector]
     }).code;
 
-    return babelTransform(withSteps, {
-        presets: ['es2015'],
-        plugins: [asyncToGenerator]
-    }).code;
+    return babelTransform(withSteps, {}).code;
 }
 
 const syncWrapper = code => {
@@ -61,17 +58,16 @@ function stepInjector(babel) {
         t.awaitExpression(t.callExpression(t.identifier(fnName), []));
 
     const MainVisitor = {
-        Loop: {
-            exit(path) {
-                // eslint-disable-next-line no-param-reassign
-                path.node.body.body = [
-                    ...path.node.body.body,
-                    createContextCall('step')
-                ];
+        FunctionDeclaration: {
+            enter(path) {
+                path.node.async = true;
             }
         },
-        ExpressionStatement: {
+        Statement: {
             exit(path) {
+                if (path.node.type === 'BlockStatement') {
+                    return;
+                }
                 path.replaceWithMultiple([
                     createContextCall('step'),
                     path.node

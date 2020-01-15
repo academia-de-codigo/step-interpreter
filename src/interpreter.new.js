@@ -3,11 +3,13 @@ import regeneratorRuntime from 'regenerator-runtime';
 import EventEmitter from 'eventemitter3';
 import { prepare } from './code-transforms';
 import { adaptError } from './error-adapters';
+import { createStepper } from './stepper';
 
 class Context {
-    constructor(userContext = {}) {
+    constructor(userContext = {}, userStepper = () => {}) {
         this.events = new EventEmitter();
         this.userContext = userContext;
+        this.stepper = createStepper(userStepper);
     }
 
     on(event, handler) {
@@ -24,18 +26,30 @@ class Context {
         this.events.off(event, handler);
     }
 
-    async step() {
-        return Promise.resolve();
+    stop() {
+        this.stepper.stop();
+    }
+
+    pause() {
+        this.stepper.pause();
+    }
+
+    resume() {
+        this.stepper.resume();
     }
 
     getInterpreterContext() {
         return {
             ...this.userContext,
             regeneratorRuntime,
+            setTimeout,
             on: (...args) => this.on(...args),
             off: (...args) => this.off(...args),
             once: (...args) => this.once(...args),
-            step: (...args) => this.step(...args)
+            step: (...args) => this.stepper.step(...args),
+            stop: (...args) => this.stop(...args),
+            pause: (...args) => this.pause(...args),
+            resume: (...args) => this.resume(...args)
         };
     }
 }
@@ -75,15 +89,25 @@ class Interpreter {
             await executor();
             this.events.emit('exit');
         } catch (err) {
+            if (err === 'execution-stop') {
+                return;
+            }
+
             throw adaptError(err);
         }
     }
 
-    resume() {}
+    resume() {
+        this.context.resume();
+    }
 
-    pause() {}
+    pause() {
+        this.context.pause();
+    }
 
-    stop() {}
+    stop() {
+        this.context.stop();
+    }
 
     setStepTime() {}
 }
