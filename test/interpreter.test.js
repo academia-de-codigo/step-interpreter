@@ -2,7 +2,7 @@ import sinon from 'sinon';
 import chai, { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import sinonChai from 'sinon-chai';
-import { createInterpreter } from '../src/interpreter.new';
+import { createInterpreter } from '../src/interpreter';
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
