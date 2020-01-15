@@ -1,13 +1,16 @@
 import sinon from 'sinon';
 import chai, { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import sinonChai from 'sinon-chai';
 import { run } from '../src/interpreter';
+import { createInterpreter } from '../src/interpreter.new';
 
 chai.use(chaiAsPromised);
+chai.use(sinonChai);
 
 describe('interpreter', function() {
     describe('execution', function() {
-        it('should correct execute code without throwing errors', async function() {
+        it('.run() should return a promise that fulfills when execution is terminated', async function() {
             const code = `
           const a = 1;
           const b = 2;
@@ -41,12 +44,64 @@ describe('interpreter', function() {
             return expect(run(code)).to.be.eventually.rejectedWith(SyntaxError);
         });
     });
+    describe('events', function() {
+        it('should call on.start event', async function() {
+            const callback = sinon.fake();
+            const code = `
+            test();
+            function test() {}
+            `;
+
+            const interpreter = createInterpreter(code, {
+                on: { start: callback }
+            });
+
+            await interpreter.run();
+            expect(callback).to.have.been.called;
+        });
+        it('should call on.exit event', async function() {
+            const callback = sinon.fake();
+            const code = `
+            test();
+            function test() {}
+            `;
+
+            const interpreter = createInterpreter(code, {
+                on: { exit: callback }
+            });
+
+            await interpreter.run();
+            expect(callback).to.have.been.called;
+        });
+        it('should not call on.exit event if execution does not terminate', async function() {
+            const callback = sinon.fake();
+            const code = `
+            run().then(() => {
+                console.log('will never be printed');
+            })
+            
+            async function run() {
+                return new Promise(() => {});
+            }
+            `;
+
+            await run(code, {
+                onEnd: callback
+            });
+
+            expect(callback).to.not.have.been.called;
+        });
+    });
     describe('context tests', function() {
-        it('1 should be 1', async function() {
+        it('should be able to call outside function', async function() {
             const callback = sinon.fake();
             const code = `callback();`;
-            await run(code, { callback });
-            expect(callback.called).to.be.true;
+            const interpreter = createInterpreter(code, {
+                context: { callback }
+            });
+
+            await interpreter.run();
+            expect(callback).to.have.been.called;
         });
     });
 });
