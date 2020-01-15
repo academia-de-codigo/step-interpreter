@@ -1,4 +1,5 @@
 import Babel from '@babel/standalone';
+import generate from '@babel/generator';
 import asyncToGenerator from './async-to-generator-polyfill';
 
 const asyncWrapper = code => {
@@ -54,8 +55,12 @@ export function prepareSync(code, noStep) {
 
 function stepInjector(babel) {
     const t = babel.types;
-    const createContextCall = fnName =>
-        t.awaitExpression(t.callExpression(t.identifier(fnName), []));
+    const createContextCall = (fnName, expr) =>
+        t.awaitExpression(
+            t.callExpression(t.identifier(fnName), [
+                t.templateLiteral([t.templateElement({ raw: expr })], [])
+            ])
+        );
 
     const MainVisitor = {
         FunctionDeclaration: {
@@ -69,7 +74,10 @@ function stepInjector(babel) {
                     return;
                 }
                 path.replaceWithMultiple([
-                    createContextCall('step'),
+                    createContextCall(
+                        'step',
+                        stepRemover(generate.default(path.node).code)
+                    ),
                     path.node
                 ]);
             }
@@ -87,4 +95,24 @@ function stepInjector(babel) {
             }
         }
     };
+}
+
+function stepRemover(code) {
+    return Babel.transform(code, {
+        parserOpts: {
+            allowReturnOutsideFunction: true,
+            allowAwaitOutsideFunction: true
+        },
+        plugins: [
+            {
+                visitor: {
+                    CallExpression(path) {
+                        if (path.node.callee.name === 'step') {
+                            path.parentPath.remove();
+                        }
+                    }
+                }
+            }
+        ]
+    }).code;
 }

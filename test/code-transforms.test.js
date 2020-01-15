@@ -22,25 +22,37 @@ describe('code-transforms', function() {
     });
     it('should inject steps before declarations', function() {
         const input = `const a = 1;`;
-        const output = /await step\(\);\s+const a = 1;/;
+        const output = /await step\(.+\);\s+const a = 1;/;
 
         expect(prepare(input)).to.match(output);
     });
     it('should inject steps before declarations inside functions', function() {
         const input = `function test() { const a = 1; }`;
-        const output = /await step\(\);\s+const a = 1;/;
+        const output = /await step\(.+\);\s+const a = 1;/;
 
         expect(prepare(input)).to.match(output);
     });
     it('should inject steps before declarations inside for loops', function() {
         const input = `for(let i = 0; i < 1; i++) { const a = 1; }`;
-        const output = /await step\(\);\s+const a = 1;/;
+        const output = /await step\(.+\);\s+const a = 1;/;
 
         expect(prepare(input)).to.match(output);
     });
     it('should inject steps before declarations inside while loops', function() {
         const input = `while(true) { const a = 1; }`;
-        const output = /await step\(\);\s+const a = 1;/;
+        const output = /await step\(.+\);\s+const a = 1;/;
+
+        expect(prepare(input)).to.match(output);
+    });
+    it('should inject step call with the next expression as argument', function() {
+        const input = `const a = 1;`;
+        const output = /await step\(`const a = 1;`\);\s+const a = 1;/;
+
+        expect(prepare(input)).to.match(output);
+    });
+    it('should inject step call with the next block code as argument (without that block steps)', function() {
+        const input = `while (true) { console.log('hey!'); }`;
+        const output = /await step\(`while \(true\) {\s+console\.log\('hey!'\);\s+}`\)/s;
 
         expect(prepare(input)).to.match(output);
     });
