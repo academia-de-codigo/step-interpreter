@@ -1,12 +1,11 @@
 import EventEmitter from 'eventemitter3';
 import regeneratorRuntime from 'regenerator-runtime';
-import { createStepper } from './stepper';
 
 export default class Context {
-    constructor(userContext = {}, userStepper = () => {}) {
+    constructor(stepper, userContext = {}) {
         this.events = new EventEmitter();
+        this.stepper = stepper;
         this.userContext = userContext;
-        this.stepper = createStepper(userStepper);
     }
 
     on(event, handler) {

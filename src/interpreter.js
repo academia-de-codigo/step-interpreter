@@ -3,13 +3,14 @@ import EventEmitter from 'eventemitter3';
 import { prepare } from './code-transforms';
 import { adaptError } from './error-adapters';
 import Context from './context';
+import Stepper from './stepper';
 
 class Interpreter {
     constructor(options = {}) {
-        const { stepTime = 100, on = {}, context = {} } = options;
-        this.stepTime = stepTime;
+        const { stepTime = 15, on = {}, context = {} } = options;
+        this.stepper = new Stepper({ stepTime });
 
-        this.context = new Context(context);
+        this.context = new Context(this.stepper, context);
         this.events = new EventEmitter();
 
         this.context.on('start', () => this.events.emit('start'));

@@ -26,10 +26,10 @@ describe('interpreter', function() {
 
         it('.run() should return a promise that fulfills when execution is terminated by the user', async function() {
             const code = `
-            await wait(50);
-            await wait(50);
-            await wait(50);
-            await wait(50);
+            while(true) {
+                await wait(5);
+                
+            }
 
             async function wait(ms) {
                 return new Promise(resolve => setTimeout(resolve, ms));
