@@ -1,8 +1,10 @@
 module.exports = {
     env: {
         es6: true,
-        node: true
+        node: true,
+        mocha: true
     },
+    plugins: ['mocha'],
     extends: [
         'eslint:recommended',
         'plugin:mocha/recommended',

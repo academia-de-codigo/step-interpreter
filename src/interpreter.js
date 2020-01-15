@@ -1,33 +1,32 @@
-import Context from 'context-eval';
+import vm from 'vm';
 import EventEmitter from 'eventemitter3';
 import regeneratorRuntime from 'regenerator-runtime';
 import { prepare, prepareSync } from './code-transforms';
+import { adaptError } from './error-adapters';
 
 export async function run(code = '', userContext = {}, step) {
     const context = createContext(userContext, step);
-    const execution = new Context(context);
 
     const transformedCode = prepare(code, !step);
-    const executor = execution.evaluate(transformedCode);
+    const executor = vm.runInNewContext(transformedCode, context);
     const { handlerCounter } = context.events;
 
     try {
         handlerCounter.increment();
         await executor();
     } catch (err) {
-        throw new Error(`[INTERPRETER] interpreter error: ${err.message}`);
+        throw adaptError(err);
     } finally {
         handlerCounter.decrement();
     }
 
-    return createInterpreterControlObject(context, execution);
+    return createInterpreterControlObject(context);
 }
 
 export function runSync(code = '', userContext = {}, step) {
     const context = createContext(userContext, step);
-    const execution = new Context(context);
     const transformedCode = prepareSync(code, !step);
-    const executor = execution.evaluate(transformedCode);
+    const executor = vm.runInNewContext(transformedCode, context);
 
     try {
         executor();
@@ -35,7 +34,7 @@ export function runSync(code = '', userContext = {}, step) {
         throw new Error(`[INTERPRETER] interpreter error: ${err.message}`);
     }
 
-    return createInterpreterControlObject(context, execution);
+    return createInterpreterControlObject(context);
 }
 
 function createCounter() {
@@ -227,6 +226,7 @@ function createContext(userContext, userStepper) {
     return {
         ...userContext,
         Error,
+        ReferenceError,
         console,
         events,
         Promise,
@@ -257,7 +257,7 @@ function createInterpreterControlObject(context, execution) {
         stop: () => {
             stepper.stop();
             events.clean();
-            execution.destroy();
+            // execution.destroy();
         },
         isPaused: stepper.isPaused
     };
