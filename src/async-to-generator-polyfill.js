@@ -5,6 +5,8 @@ import utils from '@babel/helper-plugin-utils';
 import remapAsyncToGenerator from '@babel/helper-remap-async-to-generator';
 import moduleImports from '@babel/helper-module-imports';
 
+console.log('remap async:', remapAsyncToGenerator);
+
 export default utils.declare((api, options) => {
     api.assertVersion(7);
     const { types: t } = api;
@@ -30,7 +32,7 @@ export default utils.declare((api, options) => {
                         );
                     }
 
-                    remapAsyncToGenerator(path, { wrapAsync });
+                    remapAsyncToGenerator.default(path, { wrapAsync });
                 }
             }
         };
@@ -43,7 +45,7 @@ export default utils.declare((api, options) => {
             Function(path, state) {
                 if (!path.node.async || path.node.generator) return;
 
-                remapAsyncToGenerator(path, {
+                remapAsyncToGenerator.default(path, {
                     wrapAsync: state.addHelper('asyncToGenerator')
                 });
             }

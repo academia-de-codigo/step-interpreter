@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import sinonChai from 'sinon-chai';
-import { prepare } from '../src/code-transforms';
+import { prepare, toES2015 } from '../src/code-transforms';
 
 const { expect } = chai;
 chai.use(chaiAsPromised);
@@ -85,7 +85,23 @@ describe('code-transforms', function() {
         `;
 
         const output = /await step\(`return element \+ 1;`\);\s+return element \+ 1;/;
-        console.log('output:', prepare(input));
         expect(prepare(input)).to.match(output);
+    });
+    it('should be able to transpile to es2015', async function() {
+        const input = `
+        const a = [1, 2];
+
+        const b = {
+            c() {
+                console.log('im b!');
+            }
+        }
+        `;
+
+        const output = /var a/;
+        const output2 = /function c/;
+        const transformed = toES2015(prepare(input));
+        expect(transformed).to.match(output);
+        expect(transformed).to.match(output2);
     });
 });

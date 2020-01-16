@@ -1,5 +1,13 @@
 import Babel from '@babel/standalone';
 import generate from '@babel/generator';
+import asyncToGeneratorPolyfill from './async-to-generator-polyfill';
+
+export function toES2015(code) {
+    return Babel.transform(code, {
+        presets: ['es2015'],
+        plugins: [asyncToGeneratorPolyfill]
+    }).code;
+}
 
 export function prepare(code) {
     return `
