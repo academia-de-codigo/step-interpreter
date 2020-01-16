@@ -108,6 +108,47 @@ describe('interpreter', function() {
             await interpreter.run();
             expect(callback).to.have.been.called;
         });
+        it('should call on.step event', async function() {
+            const callback = sinon.fake();
+            const code = `
+            const firstStep = 1;
+            `;
+
+            const interpreter = createInterpreter(code, {
+                on: { step: callback }
+            });
+
+            await interpreter.run();
+            expect(callback).to.have.been.called;
+        });
+        it('should call on.step event 2 times', async function() {
+            const callback = sinon.fake();
+            const code = `
+            const firstStep = 1;
+            const secondStep = 2;
+            `;
+
+            const interpreter = createInterpreter(code, {
+                on: { step: callback }
+            });
+
+            await interpreter.run();
+            expect(callback).to.have.been.calledTwice;
+        });
+        it('should call on.step event 4 times', async function() {
+            const callback = sinon.fake();
+            const code = `
+            const elements = [1, 2];
+            const newElements = elements.map(e => e + 1);
+            `;
+
+            const interpreter = createInterpreter(code, {
+                on: { step: callback }
+            });
+
+            await interpreter.run();
+            expect(callback).to.have.callCount(4);
+        });
         it('should call on.exit event', async function() {
             const callback = sinon.fake();
             const code = `

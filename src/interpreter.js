@@ -13,8 +13,8 @@ class Interpreter {
         this.context = new Context(this.stepper, context);
         this.events = new EventEmitter();
 
+        this.stepper.on('step', () => this.events.emit('step'));
         this.context.on('start', () => this.events.emit('start'));
-        this.context.on('step', () => this.events.emit('step'));
         this.context.on('exit', () => this.events.emit('exit'));
         this.on('start', on.start);
         this.on('step', on.step);

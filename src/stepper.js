@@ -8,6 +8,11 @@ export default class Stepper {
         this.stepTime = stepTime;
     }
 
+    on(event, handler) {
+        this.events.on(event, handler);
+        return () => this.events.off(event, handler);
+    }
+
     async step() {
         if (this.stopped) {
             throw 'execution-stop';

@@ -56,30 +56,46 @@ export function prepareSync(code, noStep) {
 function stepInjector(babel) {
     const t = babel.types;
     const createContextCall = (fnName, expr) =>
-        t.awaitExpression(
-            t.callExpression(t.identifier(fnName), [
-                t.templateLiteral([t.templateElement({ raw: expr })], [])
-            ])
+        t.expressionStatement(
+            t.awaitExpression(
+                t.callExpression(t.identifier(fnName), [
+                    t.templateLiteral([t.templateElement({ raw: expr })], [])
+                ])
+            )
+        );
+
+    const prependContextCall = path =>
+        path.insertBefore(
+            createContextCall('step', generate.default(path.node).code)
         );
 
     const MainVisitor = {
-        FunctionDeclaration: {
+        Function: {
             enter(path) {
                 path.node.async = true;
             }
         },
-        Statement: {
-            exit(path) {
-                if (path.node.type === 'BlockStatement') {
+        Loop: {
+            enter(path) {
+                prependContextCall(path);
+            }
+        },
+        VariableDeclaration: {
+            enter(path) {
+                prependContextCall(path);
+            }
+        },
+        ExpressionStatement: {
+            enter(path) {
+                if (
+                    t.isAwaitExpression(path.node.expression) &&
+                    t.isCallExpression(path.node.expression.argument) &&
+                    path.node.expression.argument.callee.name === 'step'
+                ) {
+                    path.skip();
                     return;
                 }
-                path.replaceWithMultiple([
-                    createContextCall(
-                        'step',
-                        stepRemover(generate.default(path.node).code)
-                    ),
-                    path.node
-                ]);
+                prependContextCall(path);
             }
         }
     };

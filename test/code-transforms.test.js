@@ -56,4 +56,15 @@ describe('code-transforms', function() {
 
         expect(prepare(input)).to.match(output);
     });
+    it('should inject step calls inside anonymous callback functions', async function() {
+        const input = `
+        const a = [1, 2];
+
+        a.map(function(element) {
+            console.log(element);
+        });
+        `;
+        const output = /await\s+step\(`console.log\(element\);`\);\s+console.log\(element\);/;
+        expect(prepare(input)).to.match(output);
+    });
 });
