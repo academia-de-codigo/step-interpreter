@@ -1,111 +1,44 @@
 import Babel from '@babel/standalone';
 import generate from '@babel/generator';
-import asyncToGenerator from './async-to-generator-polyfill';
 
-const asyncWrapper = code => {
+export function prepare(code) {
     return `
-    async function main() {
-        ${code}
+async function main() {
+    ${
+        Babel.transform(code, {
+            parserOpts: {
+                allowAwaitOutsideFunction: true
+            },
+            plugins: [stepInjector]
+        }).code
     }
-
-    main;
-    `;
-};
-
-export function prepare(code, noStep) {
-    if (noStep) {
-        return Babel.transform(asyncWrapper(code), {
-            presets: ['es2015'],
-            plugins: [asyncToGenerator]
-        }).code;
-    }
-
-    const withSteps = Babel.transform(asyncWrapper(code), {
-        plugins: [stepInjector]
-    }).code;
-
-    return Babel.transform(withSteps, {}).code;
 }
 
-const syncWrapper = code => {
-    return `
-    function main() {
-        ${code}
-    }
-
-    main;
-    `;
-};
-
-export function prepareSync(code, noStep) {
-    if (noStep) {
-        return Babel.transform(syncWrapper(code), {
-            presets: ['es2015']
-        }).code;
-    }
-
-    const withSteps = Babel.transform(syncWrapper(code), {
-        plugins: [stepInjector]
-    }).code;
-
-    return Babel.transform(withSteps, {
-        presets: ['es2015']
-    }).code;
+main;
+`;
 }
 
 function stepInjector(babel) {
     const t = babel.types;
-    const createContextCall = (fnName, expr) =>
-        t.expressionStatement(
-            t.awaitExpression(
-                t.callExpression(t.identifier(fnName), [
-                    t.templateLiteral([t.templateElement({ raw: expr })], [])
-                ])
-            )
-        );
 
-    const prependContextCall = path =>
-        path.insertBefore(
-            createContextCall('step', generate.default(path.node).code)
-        );
-
-    const MainVisitor = {
-        Function: {
-            enter(path) {
+    return {
+        visitor: {
+            Function(path) {
                 path.node.async = true;
-            }
-        },
-        ArrowFunctionExpression: {
-            enter(path) {
-                if (t.isBinaryExpression(path.node.body)) {
-                    path.replaceWith(
-                        t.arrowFunctionExpression(
-                            path.node.params,
-                            t.blockStatement([
-                                createContextCall(
-                                    'step',
-                                    generate.default(path.node.body).code
-                                ),
-                                t.returnStatement(path.node.body)
-                            ]),
-                            path.node.async
-                        )
-                    );
-                }
-            }
-        },
-        Loop: {
-            enter(path) {
-                prependContextCall(path);
-            }
-        },
-        VariableDeclaration: {
-            enter(path) {
-                prependContextCall(path);
-            }
-        },
-        ExpressionStatement: {
-            enter(path) {
+            },
+            ArrowFunctionExpression(path) {
+                implicitToExplicitReturnFunction(babel, path);
+            },
+            ReturnStatement(path) {
+                prependContextCall(babel, path);
+            },
+            Loop(path) {
+                prependContextCall(babel, path);
+            },
+            VariableDeclaration(path) {
+                prependContextCall(babel, path);
+            },
+            ExpressionStatement(path) {
                 if (
                     t.isAwaitExpression(path.node.expression) &&
                     t.isCallExpression(path.node.expression.argument) &&
@@ -114,20 +47,45 @@ function stepInjector(babel) {
                     path.skip();
                     return;
                 }
-                prependContextCall(path);
+                prependContextCall(babel, path);
             }
         }
     };
+}
 
-    return {
-        visitor: {
-            FunctionDeclaration(path) {
-                if (path.node.id.name === 'main') {
-                    path.traverse(MainVisitor);
-                }
+function createContextCall(babel, fnName, expr) {
+    const { types: t } = babel;
 
-                path.stop();
-            }
-        }
-    };
+    const stepperName = t.identifier(fnName);
+    const stepperArgs = [
+        t.templateLiteral([t.templateElement({ raw: expr })], [])
+    ];
+
+    return t.expressionStatement(
+        t.awaitExpression(t.callExpression(stepperName, stepperArgs))
+    );
+}
+
+function prependContextCall(babel, path) {
+    return path.insertBefore(
+        createContextCall(babel, 'step', generate.default(path.node).code)
+    );
+}
+
+function implicitToExplicitReturnFunction(babel, path) {
+    const { types: t } = babel;
+
+    if (!t.isArrowFunctionExpression(path.node)) {
+        return;
+    }
+
+    if (t.isBlockStatement(path.node.body)) {
+        return;
+    }
+
+    const { params } = path.node;
+    const body = t.blockStatement([t.returnStatement(path.node.body)]);
+    const { async: isAsync } = path.node;
+
+    return path.replaceWith(t.arrowFunctionExpression(params, body, isAsync));
 }

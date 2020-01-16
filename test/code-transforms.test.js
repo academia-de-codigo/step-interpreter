@@ -84,7 +84,8 @@ describe('code-transforms', function() {
         const b = a.map(element => element + 1);
         `;
 
-        const output = /await step\(`element \+ 1`\);\s+return element \+ 1;/;
+        const output = /await step\(`return element \+ 1;`\);\s+return element \+ 1;/;
+        console.log('output:', prepare(input));
         expect(prepare(input)).to.match(output);
     });
 });
