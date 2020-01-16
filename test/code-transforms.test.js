@@ -59,12 +59,32 @@ describe('code-transforms', function() {
     it('should inject step calls inside anonymous callback functions', async function() {
         const input = `
         const a = [1, 2];
-
-        a.map(function(element) {
+        const b = a.map(function(element) {
             console.log(element);
         });
         `;
         const output = /await\s+step\(`console.log\(element\);`\);\s+console.log\(element\);/;
+        expect(prepare(input)).to.match(output);
+    });
+    it('should inject step calls inside arrow functions with body', async function() {
+        const input = `
+        const a = [1, 2];
+        const b = a.map(element => {
+            console.log(element);
+            return element + 1;
+        });
+        `;
+
+        const output = /await\s+step\(`console.log\(element\);`\);\s+console.log\(element\);/;
+        expect(prepare(input)).to.match(output);
+    });
+    it('should inject step calls inside arrow functions with implicit return', async function() {
+        const input = `
+        const a = [1, 2];
+        const b = a.map(element => element + 1);
+        `;
+
+        const output = /await step\(`element \+ 1`\);\s+return element \+ 1;/;
         expect(prepare(input)).to.match(output);
     });
 });

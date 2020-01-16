@@ -75,6 +75,25 @@ function stepInjector(babel) {
                 path.node.async = true;
             }
         },
+        ArrowFunctionExpression: {
+            enter(path) {
+                if (t.isBinaryExpression(path.node.body)) {
+                    path.replaceWith(
+                        t.arrowFunctionExpression(
+                            path.node.params,
+                            t.blockStatement([
+                                createContextCall(
+                                    'step',
+                                    generate.default(path.node.body).code
+                                ),
+                                t.returnStatement(path.node.body)
+                            ]),
+                            path.node.async
+                        )
+                    );
+                }
+            }
+        },
         Loop: {
             enter(path) {
                 prependContextCall(path);
@@ -111,24 +130,4 @@ function stepInjector(babel) {
             }
         }
     };
-}
-
-function stepRemover(code) {
-    return Babel.transform(code, {
-        parserOpts: {
-            allowReturnOutsideFunction: true,
-            allowAwaitOutsideFunction: true
-        },
-        plugins: [
-            {
-                visitor: {
-                    CallExpression(path) {
-                        if (path.node.callee.name === 'step') {
-                            path.parentPath.remove();
-                        }
-                    }
-                }
-            }
-        ]
-    }).code;
 }
