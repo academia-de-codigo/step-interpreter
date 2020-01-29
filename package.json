@@ -1,13 +1,12 @@
 {
   "name": "step-interpreter",
   "version": "0.1.0",
-  "type": "module",
   "description": "Executes code in a (unsafe) sandboxed environment, instruction by instruction, with configurable speed.",
   "main": "./index.js",
   "repository": "https://github.com/academia-de-codigo/step-interpreter",
   "scripts": {
-    "test": "node --experimental-specifier-resolution=node node_modules/mocha/bin/mocha",
-    "coverage": "nyc --cache false npm run test",
+    "test": "mocha",
+    "coverage": "nyc npm run test",
     "lint": "eslint --fix **/*.js"
   },
   "author": "<Academia de Código _>",

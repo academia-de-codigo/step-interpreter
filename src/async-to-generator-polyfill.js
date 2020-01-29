@@ -1,13 +1,13 @@
 /* *******
 this is taken from the official babel repo but with all the build-time node dependencies stripped out (---> fs)
 ******* */
-import utils from '@babel/helper-plugin-utils';
-import remapAsyncToGenerator from '@babel/helper-remap-async-to-generator';
-import moduleImports from '@babel/helper-module-imports';
+const utils = require('@babel/helper-plugin-utils');
+const remapAsyncToGenerator = require('@babel/helper-remap-async-to-generator');
+const moduleImports = require('@babel/helper-module-imports');
 
 console.log('remap async:', remapAsyncToGenerator);
 
-export default utils.declare((api, options) => {
+module.exports = utils.declare((api, options) => {
     api.assertVersion(7);
     const { types: t } = api;
 

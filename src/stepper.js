@@ -1,6 +1,6 @@
-import EventEmitter from 'eventemitter3';
+const EventEmitter = require('eventemitter3');
 
-export default class Stepper {
+class Stepper {
     constructor(options = {}) {
         const { stepTime = 100 } = options;
 
@@ -63,6 +63,8 @@ export default class Stepper {
         this.pausePromise = null;
     }
 }
+
+module.exports = Stepper;
 
 function wait(ms = false) {
     let rejector;

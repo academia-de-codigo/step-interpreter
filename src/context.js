@@ -1,7 +1,7 @@
-import EventEmitter from 'eventemitter3';
-import regeneratorRuntime from 'regenerator-runtime';
+const EventEmitter = require('eventemitter3');
+const regeneratorRuntime = require('regenerator-runtime');
 
-export default class Context {
+class Context {
     constructor(stepper, userContext = {}) {
         this.events = new EventEmitter();
         this.stepper = stepper;
@@ -51,3 +51,5 @@ export default class Context {
         };
     }
 }
+
+module.exports = Context;

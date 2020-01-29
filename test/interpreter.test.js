@@ -1,8 +1,8 @@
-import sinon from 'sinon';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import sinonChai from 'sinon-chai';
-import { createInterpreter } from '../src/interpreter';
+const sinon = require('sinon');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const sinonChai = require('sinon-chai');
+const { createInterpreter } = require('../src/interpreter');
 
 const { expect } = chai;
 chai.use(chaiAsPromised);

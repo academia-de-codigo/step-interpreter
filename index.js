@@ -1,6 +1,3 @@
-import { createInterpreter } from './src/interpreter';
+const { createInterpreter } = require('./src/interpreter');
 
-export { createInterpreter };
-
-const i = createInterpreter(`console.log('ho');`);
-i.run();
+exports.createInterpreter = createInterpreter;

@@ -1,15 +1,18 @@
-import Babel from '@babel/standalone';
-import generate from '@babel/generator';
-import asyncToGeneratorPolyfill from './async-to-generator-polyfill';
+const Babel = require('@babel/standalone');
+const generate = require('@babel/generator');
+const asyncToGeneratorPolyfill = require('./async-to-generator-polyfill');
 
-export function toES2015(code) {
+exports.toES2015 = toES2015;
+exports.prepare = prepare;
+
+function toES2015(code) {
     return Babel.transform(code, {
         presets: ['es2015'],
         plugins: [asyncToGeneratorPolyfill]
     }).code;
 }
 
-export function prepare(code) {
+function prepare(code) {
     return `
 async function main() {
     ${

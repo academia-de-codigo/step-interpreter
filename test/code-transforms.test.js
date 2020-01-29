@@ -1,7 +1,7 @@
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import sinonChai from 'sinon-chai';
-import { prepare, toES2015 } from '../src/code-transforms';
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const sinonChai = require('sinon-chai');
+const { prepare, toES2015 } = require('../src/code-transforms');
 
 const { expect } = chai;
 chai.use(chaiAsPromised);
@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('code-transforms', function() {
     it('should wrap code in async function', function() {
         const input = `const a = 1;`;
-        const output = /async function main\(\) {.+}/s;
+        const output = /async function main\(\) \{.+\}/s;
 
         expect(prepare(input)).to.match(output);
     });

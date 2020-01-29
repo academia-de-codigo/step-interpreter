@@ -1,9 +1,9 @@
-import vm from 'vm';
-import EventEmitter from 'eventemitter3';
-import { prepare } from './code-transforms';
-import { adaptError } from './error-adapters';
-import Context from './context';
-import Stepper from './stepper';
+const vm = require('vm');
+const EventEmitter = require('eventemitter3');
+const { prepare } = require('./code-transforms');
+const { adaptError } = require('./error-adapters');
+const Context = require('./context');
+const Stepper = require('./stepper');
 
 class Interpreter {
     constructor(options = {}) {
@@ -65,7 +65,7 @@ class Interpreter {
     setStepTime() {}
 }
 
-export function createInterpreter(code, options) {
+function createInterpreter(code, options) {
     const interpreter = new Interpreter(options);
 
     return {
@@ -76,3 +76,5 @@ export function createInterpreter(code, options) {
         context: interpreter.context
     };
 }
+
+exports.createInterpreter = createInterpreter;

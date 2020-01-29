@@ -2,7 +2,7 @@ const ERROR_MAP = {
     ReferenceError: ReferenceError
 };
 
-export function adaptError(error) {
+function adaptError(error) {
     const { name } = error.constructor;
 
     if (!ERROR_MAP[name]) {
@@ -15,3 +15,5 @@ export function adaptError(error) {
 
     return adapted;
 }
+
+exports.adaptError = adaptError;
