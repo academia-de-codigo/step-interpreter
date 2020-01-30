@@ -47,6 +47,14 @@ function stepInjector(babel) {
                 prependContextCall(babel, path);
             },
             VariableDeclaration(path) {
+                if (
+                    t.isForStatement(path.parent) ||
+                    t.isWhileStatement(path.parent)
+                ) {
+                    path.skip();
+                    return;
+                }
+
                 prependContextCall(babel, path);
             },
             ExpressionStatement(path) {

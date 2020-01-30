@@ -114,7 +114,9 @@ describe('interpreter', function() {
         it('should be able to run a for loop', async function() {
             const callback = sinon.fake();
             const code = `
-                    callback(1);
+            for(let i = 0; i < 5; i++) {
+                callback(i);
+            }
             `;
 
             const interpreter = new Interpreter({
@@ -122,13 +124,12 @@ describe('interpreter', function() {
             });
 
             await interpreter.run(code);
-            /*
+            expect(callback).to.have.been.calledWith(0);
             expect(callback).to.have.been.calledWith(1);
             expect(callback).to.have.been.calledWith(2);
             expect(callback).to.have.been.calledWith(3);
             expect(callback).to.have.been.calledWith(4);
-            expect(callback).to.have.been.calledWith(5);
-            */
+            expect(callback).to.have.been.callCount(5);
         });
     });
     describe('events', function() {
