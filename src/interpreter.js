@@ -62,7 +62,9 @@ class Interpreter {
         this.context.stop();
     }
 
-    setStepTime() {}
+    setStepTime(ms) {
+        this.stepper.setStepTime(ms);
+    }
 }
 
 function createInterpreter(code, options) {

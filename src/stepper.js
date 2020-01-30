@@ -32,18 +32,6 @@ class Stepper {
         }
     }
 
-    async destroy() {
-        this.destroyed = true;
-
-        if (this.currentStep) {
-            this.currentStep.cancel();
-        }
-
-        if (this.pausePromise) {
-            this.pausePromise.cancel();
-        }
-    }
-
     async pause() {
         if (this.pausePromise) {
             return;
@@ -59,6 +47,22 @@ class Stepper {
 
         this.pausePromise.resolve();
         this.pausePromise = null;
+    }
+
+    setStepTime(stepTime) {
+        this.stepTime = stepTime;
+    }
+
+    async destroy() {
+        this.destroyed = true;
+
+        if (this.currentStep) {
+            this.currentStep.cancel();
+        }
+
+        if (this.pausePromise) {
+            this.pausePromise.cancel();
+        }
     }
 }
 
