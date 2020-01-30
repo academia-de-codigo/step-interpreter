@@ -6,6 +6,7 @@
     "repository": "https://github.com/pantoninho/step-interpreter",
     "scripts": {
         "test": "mocha",
+        "coverage:lcov": "nyc --reporter=lcov npm run test",
         "coverage": "nyc npm run test",
         "lint": "eslint --fix **/*.js"
     },
