@@ -1,14 +1,17 @@
+[![Maintainability](https://api.codeclimate.com/v1/badges/d88c39be51e81a4f78cf/maintainability)](https://codeclimate.com/github/pantoninho/step-interpreter/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/d88c39be51e81a4f78cf/test_coverage)](https://codeclimate.com/github/pantoninho/step-interpreter/test_coverage)
+[![Build Status](https://travis-ci.com/pantoninho/step-interpreter.svg?branch=master)](https://travis-ci.com/pantoninho/step-interpreter)
+
 # step-interpreter
 
-Javascript interpreter that is able to run code with configurable speed.
+Sandboxed javascript interpreter that is able to run at configurable speed.
 
 TODO README
-
 
 Example usage:
 
 ```
-const Interpreter = require('../src/interpreter');
+const { createInterpreter } = require('step-interpreter');
 
 const code = `
     const a = 1;
@@ -16,10 +19,6 @@ const code = `
     for (let i = 0; i < 5; i++) {
         console.log(sum(a, i));
     }
-    
-    this.printer = function(string) {
-        console.log(string);
-    };
 
     function sum(a, b) {
         return a + b;
@@ -29,12 +28,17 @@ const code = `
 `;
 
 async function run() {
-    const interpreter = new Interpreter();
-    const unsubscribe = interpreter.addStepper(code => console.log('going to run....', code));
-
-    interpreter.expose({
-        console,
+    const interpreter = createInterpreter({
+        stepTime: 100,
+        context: { console }
     });
+
+    const unsubscribe = interpreter.on(
+        'step',
+        code => console.log('going to run....', code)
+    );
+
+    interpreter.expose({ console });
 
     setTimeout(() => {
         console.log('pausing interpreter...');
@@ -51,7 +55,6 @@ async function run() {
     }, 3000);
 
     await interpreter.run(code);
-    interpreter.read('printer')('OUTSIDE INTERPRETER: DONE!');
 }
 
 run();

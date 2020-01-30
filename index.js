@@ -1,3 +1,3 @@
 const Interpreter = require('./src/interpreter');
 
-exports.Interpreter = Interpreter;;
+exports.Interpreter = Interpreter;
