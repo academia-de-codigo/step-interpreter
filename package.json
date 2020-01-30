@@ -3,13 +3,13 @@
     "version": "1.0.0",
     "description": "Executes code in a (unsafe) sandboxed environment, instruction by instruction, with configurable speed.",
     "main": "./index.js",
-    "repository": "https://github.com/academia-de-codigo/step-interpreter",
+    "repository": "https://github.com/pantoninho/step-interpreter",
     "scripts": {
         "test": "mocha",
         "coverage": "nyc npm run test",
         "lint": "eslint --fix **/*.js"
     },
-    "author": "<Academia de Código _>",
+    "author": "Pedro Antoninho",
     "license": "ISC",
     "dependencies": {
         "@babel/generator": "^7.8.3",
