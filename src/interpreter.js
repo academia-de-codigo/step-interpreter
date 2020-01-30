@@ -8,12 +8,12 @@ const Stepper = require('./stepper');
 class Interpreter {
     constructor(options = {}) {
         const { stepTime = 15, on = {}, context = {} } = options;
-        this.stepper = new Stepper({ stepTime });
+        this.getStepper = stepperFactory(this, { stepTime });
+        this.stepper = this.getStepper();
 
-        this.context = new Context(this.stepper, context);
+        this.context = new Context(this, context);
         this.events = new EventEmitter();
 
-        this.stepper.on('step', () => this.events.emit('step'));
         this.context.on('start', () => this.events.emit('start'));
         this.context.on('exit', () => this.events.emit('exit'));
         this.on('start', on.start);
@@ -51,20 +51,38 @@ class Interpreter {
     }
 
     resume() {
-        this.context.resume();
+        this.stepper.resume();
     }
 
     pause() {
-        this.context.pause();
+        this.stepper.pause();
     }
 
     stop() {
-        this.context.stop();
+        this.stepper.destroy();
+        this.stepper = this.getStepper();
     }
 
     setStepTime(ms) {
         this.stepper.setStepTime(ms);
     }
+}
+
+function stepperFactory(interpreter, options) {
+    let stepper;
+    let stepDisposer;
+
+    return () => {
+        if (stepDisposer) {
+            stepDisposer();
+        }
+        stepper = new Stepper(options);
+        stepDisposer = stepper.on('step', () =>
+            interpreter.events.emit('step')
+        );
+
+        return stepper;
+    };
 }
 
 function createInterpreter(code, options) {

@@ -42,6 +42,24 @@ describe('interpreter', function() {
             return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
+        it('.run() should be able to work after stopping', async function() {
+            const code = `
+            await wait(15);
+            await wait(15);
+            await wait(15);
+            await wait(15);
+
+            async function wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        `;
+
+            const interpreter = createInterpreter(code);
+            setTimeout(() => interpreter.stop(), 20);
+            await expect(interpreter.run(code)).to.eventually.be.fulfilled;
+            await expect(interpreter.run(code)).to.eventually.be.fulfilled;
+        });
+
         it('.run() should be able to execute async code top-level', async function() {
             const code = `
             await wait(100);
