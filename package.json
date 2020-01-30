@@ -1,5 +1,5 @@
 {
-    "name": "@ubbu/step-interpreter",
+    "name": "step-interpreter",
     "version": "1.0.0",
     "description": "Executes code in a (unsafe) sandboxed environment, instruction by instruction, with configurable speed.",
     "main": "./index.js",
