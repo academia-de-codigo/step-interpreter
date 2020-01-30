@@ -31,18 +31,20 @@ class Stepper {
             if (err === 'canceled') {
                 throw 'execution-stop';
             }
+
+            throw err;
         }
     }
 
     async stop() {
         this.stopped = true;
-        if (this.pausePromise) {
-            this.pausePromise.cancel();
-            return;
-        }
 
         if (this.currentStep) {
             this.currentStep.cancel();
+        }
+
+        if (this.pausePromise) {
+            this.pausePromise.cancel();
         }
     }
 
