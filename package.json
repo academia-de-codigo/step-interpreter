@@ -1,6 +1,6 @@
 {
-  "name": "step-interpreter",
-  "version": "0.1.0",
+  "name": "@ubbu/step-interpreter",
+  "version": "1.0.0",
   "description": "Executes code in a (unsafe) sandboxed environment, instruction by instruction, with configurable speed.",
   "main": "./index.js",
   "repository": "https://github.com/academia-de-codigo/step-interpreter",
