@@ -14,8 +14,8 @@ class Stepper {
     }
 
     async step() {
-        if (this.stopped) {
-            throw 'execution-stop';
+        if (this.destroyed) {
+            throw 'stepper-destroyed';
         }
 
         this.events.emit('step');
@@ -28,16 +28,12 @@ class Stepper {
                 await this.pausePromise;
             }
         } catch (err) {
-            if (err === 'canceled') {
-                throw 'execution-stop';
-            }
-
-            throw err;
+            throw 'stepper-destroyed';
         }
     }
 
-    async stop() {
-        this.stopped = true;
+    async destroy() {
+        this.destroyed = true;
 
         if (this.currentStep) {
             this.currentStep.cancel();
@@ -81,7 +77,7 @@ function wait(ms = false) {
         }
     });
 
-    promise.cancel = () => rejector('canceled');
+    promise.cancel = () => rejector('destroyed');
     promise.resolve = () => resolver();
 
     return promise;

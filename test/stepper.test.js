@@ -35,38 +35,38 @@ describe('stepper', function() {
             );
         });
 
-        it('should be able to be stopped', async function() {
+        it('should be able to be destroyed', async function() {
             const stepTime = 200;
             const stepper = new Stepper({ stepTime });
 
-            setTimeout(() => stepper.stop(), 10);
+            setTimeout(() => stepper.destroy(), 10);
             const before = performance.now();
             await expect(stepper.step()).to.be.eventually.rejectedWith(
-                'execution-stop'
+                'stepper-destroyed'
             );
             const after = performance.now();
 
             expect(after - before).to.be.lessThan(stepTime);
         });
 
-        it('should not be able to step again after being stopped', async function() {
+        it('should not be able to step again after being destroyed', async function() {
             const stepTime = 200;
             const stepper = new Stepper({ stepTime });
 
-            setTimeout(() => stepper.stop(), 10);
+            setTimeout(() => stepper.destroy(), 10);
 
             const before = performance.now();
             await expect(stepper.step()).to.be.eventually.rejectedWith(
-                'execution-stop'
+                'stepper-destroyed'
             );
             const after = performance.now();
             expect(after - before).to.be.lessThan(stepTime);
 
             await expect(stepper.step()).to.be.eventually.rejectedWith(
-                'execution-stop'
+                'stepper-destroyed'
             );
             await expect(stepper.step()).to.be.eventually.rejectedWith(
-                'execution-stop'
+                'stepper-destroyed'
             );
         });
 
@@ -93,16 +93,16 @@ describe('stepper', function() {
             expect(after - before).to.be.greaterThan(pauseForMs);
         });
 
-        it('should be able to be stopped while paused', async function() {
+        it('should be able to be destroyed while paused', async function() {
             const stepTime = 50;
             const stepper = new Stepper({ stepTime });
 
             setTimeout(() => stepper.pause(), 10);
-            setTimeout(() => stepper.stop(), 100);
+            setTimeout(() => stepper.destroy(), 100);
 
             const before = performance.now();
             await expect(stepper.step()).to.be.eventually.rejectedWith(
-                'execution-stop'
+                'stepper-destroyed'
             );
             const after = performance.now();
 

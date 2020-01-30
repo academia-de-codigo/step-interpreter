@@ -23,7 +23,7 @@ class Context {
     }
 
     stop() {
-        this.stepper.stop();
+        this.stepper.destroy();
     }
 
     pause() {

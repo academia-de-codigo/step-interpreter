@@ -42,7 +42,7 @@ class Interpreter {
             await executor();
             this.events.emit('exit');
         } catch (err) {
-            if (err === 'execution-stop') {
+            if (err === 'stepper-destroyed') {
                 return;
             }
 
