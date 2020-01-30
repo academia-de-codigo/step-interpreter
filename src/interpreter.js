@@ -85,16 +85,4 @@ function stepperFactory(interpreter, options) {
     };
 }
 
-function createInterpreter(code, options) {
-    const interpreter = new Interpreter(options);
-
-    return {
-        run: async () => interpreter.run(code),
-        pause: () => interpreter.pause(),
-        resume: () => interpreter.resume(),
-        stop: () => interpreter.stop(),
-        context: interpreter.context
-    };
-}
-
-exports.createInterpreter = createInterpreter;
+module.exports = Interpreter;

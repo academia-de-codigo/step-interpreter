@@ -1,3 +1,3 @@
-const { createInterpreter } = require('./src/interpreter');
+const Interpreter = require('./src/interpreter');
 
-exports.createInterpreter = createInterpreter;
+exports.Interpreter = Interpreter;;

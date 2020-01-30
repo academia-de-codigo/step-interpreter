@@ -2,7 +2,7 @@ const sinon = require('sinon');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const sinonChai = require('sinon-chai');
-const { createInterpreter } = require('../src/interpreter');
+const Interpreter = require('../src/interpreter');
 
 const { expect } = chai;
 chai.use(chaiAsPromised);
@@ -21,7 +21,7 @@ describe('interpreter', function() {
           }
         `;
 
-            const interpreter = createInterpreter(code);
+            const interpreter = new Interpreter();
             return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
@@ -37,7 +37,7 @@ describe('interpreter', function() {
             }
         `;
 
-            const interpreter = createInterpreter(code);
+            const interpreter = new Interpreter();
             setTimeout(() => interpreter.stop(), 100);
             return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
@@ -54,7 +54,7 @@ describe('interpreter', function() {
             }
         `;
 
-            const interpreter = createInterpreter(code);
+            const interpreter = new Interpreter();
             setTimeout(() => interpreter.stop(), 20);
             await expect(interpreter.run(code)).to.eventually.be.fulfilled;
             await expect(interpreter.run(code)).to.eventually.be.fulfilled;
@@ -69,7 +69,7 @@ describe('interpreter', function() {
             }
         `;
 
-            const interpreter = createInterpreter(code);
+            const interpreter = new Interpreter();
             return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
@@ -81,10 +81,10 @@ describe('interpreter', function() {
                 return new Promise(resolve => setTimeout(resolve, ms));
             }
         `;
-            const interpreter = createInterpreter(code);
+            const interpreter = new Interpreter();
             setTimeout(() => interpreter.pause(), 10);
             setTimeout(() => interpreter.resume(), 200);
-            return expect(interpreter.run()).to.eventually.be.fulfilled;
+            return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
         it('.run() should throw ReferenceError', async function() {
@@ -93,8 +93,8 @@ describe('interpreter', function() {
           const b = a + badVariable;
         `;
 
-            const interpreter = createInterpreter(code);
-            return expect(interpreter.run()).to.be.eventually.rejectedWith(
+            const interpreter = new Interpreter();
+            return expect(interpreter.run(code)).to.be.eventually.rejectedWith(
                 ReferenceError,
                 'badVariable'
             );
@@ -105,10 +105,30 @@ describe('interpreter', function() {
           const a =;
         `;
 
-            const interpreter = createInterpreter(code);
-            return expect(interpreter.run()).to.be.eventually.rejectedWith(
+            const interpreter = new Interpreter();
+            return expect(interpreter.run(code)).to.be.eventually.rejectedWith(
                 SyntaxError
             );
+        });
+
+        it('should be able to run a for loop', async function() {
+            const callback = sinon.fake();
+            const code = `
+                    callback(1);
+            `;
+
+            const interpreter = new Interpreter({
+                context: { callback }
+            });
+
+            await interpreter.run(code);
+            /*
+            expect(callback).to.have.been.calledWith(1);
+            expect(callback).to.have.been.calledWith(2);
+            expect(callback).to.have.been.calledWith(3);
+            expect(callback).to.have.been.calledWith(4);
+            expect(callback).to.have.been.calledWith(5);
+            */
         });
     });
     describe('events', function() {
@@ -119,11 +139,11 @@ describe('interpreter', function() {
             function test() {}
             `;
 
-            const interpreter = createInterpreter(code, {
+            const interpreter = new Interpreter({
                 on: { start: callback }
             });
 
-            await interpreter.run();
+            await interpreter.run(code);
             expect(callback).to.have.been.called;
         });
         it('should call on.step event', async function() {
@@ -132,11 +152,11 @@ describe('interpreter', function() {
             const firstStep = 1;
             `;
 
-            const interpreter = createInterpreter(code, {
+            const interpreter = new Interpreter({
                 on: { step: callback }
             });
 
-            await interpreter.run();
+            await interpreter.run(code);
             expect(callback).to.have.been.called;
         });
         it('should call on.step event 2 times', async function() {
@@ -146,11 +166,11 @@ describe('interpreter', function() {
             const secondStep = 2;
             `;
 
-            const interpreter = createInterpreter(code, {
+            const interpreter = new Interpreter({
                 on: { step: callback }
             });
 
-            await interpreter.run();
+            await interpreter.run(code);
             expect(callback).to.have.been.calledTwice;
         });
         it('should call on.step event 4 times', async function() {
@@ -160,11 +180,11 @@ describe('interpreter', function() {
             const newElements = elements.map(e => e + 1);
             `;
 
-            const interpreter = createInterpreter(code, {
+            const interpreter = new Interpreter({
                 on: { step: callback }
             });
 
-            await interpreter.run();
+            await interpreter.run(code);
             expect(callback).to.have.callCount(4);
         });
         it('should call on.exit event', async function() {
@@ -174,11 +194,11 @@ describe('interpreter', function() {
             function test() {}
             `;
 
-            const interpreter = createInterpreter(code, {
+            const interpreter = new Interpreter({
                 on: { exit: callback }
             });
 
-            await interpreter.run();
+            await interpreter.run(code);
             expect(callback).to.have.been.called;
         });
     });
@@ -186,11 +206,11 @@ describe('interpreter', function() {
         it('should be able to call outside function', async function() {
             const callback = sinon.fake();
             const code = `callback();`;
-            const interpreter = createInterpreter(code, {
+            const interpreter = new Interpreter({
                 context: { callback }
             });
 
-            await interpreter.run();
+            await interpreter.run(code);
             expect(callback).to.have.been.called;
         });
     });
