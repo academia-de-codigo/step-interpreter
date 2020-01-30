@@ -1,6 +1,6 @@
 const Babel = require('@babel/standalone');
 const generate = require('@babel/generator');
-const asyncToGeneratorPolyfill = require('./async-to-generator-polyfill');
+const asyncToPromise = require('babel-plugin-transform-async-to-promises');
 
 exports.toES2015 = toES2015;
 exports.prepare = prepare;
@@ -8,7 +8,7 @@ exports.prepare = prepare;
 function toES2015(code) {
     return Babel.transform(code, {
         presets: ['es2015'],
-        plugins: [asyncToGeneratorPolyfill]
+        plugins: [asyncToPromise]
     }).code;
 }
 
