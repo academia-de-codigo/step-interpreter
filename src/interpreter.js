@@ -10,14 +10,13 @@ class Interpreter {
         const { stepTime = 15, on = {}, context = {} } = options;
 
         this.getStepper = stepperFactory(this, { stepTime });
-        this.stepper = this.getStepper();
-
+        this.steppers = [];
         this.context = new Context(this, context);
         this.events = new EventEmitter();
 
         this.on('start', on.start);
         this.on('step', on.step);
-        this.on('exit', on.exit);
+        this.on('end', on.exit);
     }
 
     on(event, handler) {
@@ -30,11 +29,15 @@ class Interpreter {
     }
 
     async run(code, { initialize = async () => {} } = {}) {
-        const step = this.stepper.step.bind(this.stepper);
+        const stepper = this.getStepper();
+        this.steppers.push(stepper);
+        const step = async (...args) => stepper.step(...args);
+
         const context = {
             ...this.context.getInterpreterContext(step),
             __initialize__: contextSetup(initialize)
         };
+
         const transformedCode = `
         __initialize__(this);
         ${prepare(code)}
@@ -45,31 +48,32 @@ class Interpreter {
         try {
             this.events.emit('start');
             await executor();
-            this.events.emit('exit');
+            this.events.emit('end');
         } catch (err) {
             if (err === 'stepper-destroyed') {
                 return;
             }
 
             throw adaptError(err);
+        } finally {
+            this.steppers = this.steppers.filter(s => s !== stepper);
         }
     }
 
     resume() {
-        this.stepper.resume();
+        this.steppers.forEach(s => s.resume());
     }
 
     pause() {
-        this.stepper.pause();
+        this.steppers.forEach(s => s.pause());
     }
 
     stop() {
-        this.stepper.destroy();
-        this.stepper = this.getStepper();
+        this.steppers.forEach(s => s.destroy());
     }
 
     setStepTime(ms) {
-        this.stepper.setStepTime(ms);
+        this.steppers.forEach(s => s.setStepTime(ms));
     }
 }
 
