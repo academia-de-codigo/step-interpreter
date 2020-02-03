@@ -52,14 +52,15 @@ describe('interpreter', function() {
         });
 
         it('.run() should be able to execute async code top-level', async function() {
-            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const code = `
             const a = 1;
-            await sleep(100);
+            await run();
             const b = 2;
+
+            async function run() {}
         `;
 
-            const interpreter = new Interpreter({ context: { sleep } });
+            const interpreter = new Interpreter();
             return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
