@@ -50,6 +50,20 @@ function stepInjector(babel) {
             },
             Loop(path) {
                 prependContextCall(babel, path);
+
+                if (
+                    t.isBlockStatement(path.node.body) &&
+                    !path.node.body.body.length
+                ) {
+                    path.node.body = t.blockStatement([
+                        createContextCall(
+                            babel,
+                            'step',
+                            generate.default(path.node).code
+                        )
+                    ]);
+                    path.skip();
+                }
             },
             VariableDeclaration(path) {
                 if (

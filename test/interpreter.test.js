@@ -120,6 +120,26 @@ describe('interpreter', function() {
             expect(callback).to.have.been.calledWith(4);
             expect(callback).to.have.been.callCount(5);
         });
+
+        it('should be protected against infinite while loops', async function() {
+            const code = `
+            while(true) {}
+        `;
+
+            const interpreter = new Interpreter();
+            setTimeout(() => interpreter.stop(), 200);
+            await expect(interpreter.run(code)).to.eventually.be.fulfilled;
+        });
+
+        it('should be protected against infinite for loops', async function() {
+            const code = `
+            for (;;) {}
+        `;
+
+            const interpreter = new Interpreter();
+            setTimeout(() => interpreter.stop(), 200);
+            await expect(interpreter.run(code)).to.eventually.be.fulfilled;
+        });
     });
     describe('events', function() {
         it('should call on.start event', async function() {
