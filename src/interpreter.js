@@ -30,17 +30,17 @@ class Interpreter {
     }
 
     async run(code, { initialize = async () => {} } = {}) {
-        const transformedCode = prepare(code);
-        const executor = vm.runInNewContext(
-            `
-            __initialize__(this);
-            ${transformedCode}
-            `,
-            {
-                ...this.context.getInterpreterContext(),
-                __initialize__: contextSetup(initialize)
-            }
-        );
+        const step = this.stepper.step.bind(this.stepper);
+        const context = {
+            ...this.context.getInterpreterContext(step),
+            __initialize__: contextSetup(initialize)
+        };
+        const transformedCode = `
+        __initialize__(this);
+        ${prepare(code)}
+        `;
+
+        const executor = vm.runInNewContext(transformedCode, context);
 
         try {
             this.events.emit('start');
@@ -95,6 +95,10 @@ function stepperFactory(interpreter, options) {
 function contextSetup(initialize = () => {}) {
     return context => {
         const { Array } = context;
+        context.Promise = Promise;
+        context.Error = Error;
+        context.setTimeout = setTimeout;
+        context.console = console;
         Array.prototype.reduce = reduce;
         Array.prototype.forEach = forEach;
         Array.prototype.filter = filter;

@@ -33,18 +33,16 @@ class Context {
         this.interpreter.resume();
     }
 
-    getInterpreterContext() {
+    getInterpreterContext(step) {
         return {
             ...this.userContext,
-            setTimeout,
             on: (...args) => this.on(...args),
             off: (...args) => this.off(...args),
             once: (...args) => this.once(...args),
-            step: (...args) => this.interpreter.stepper.step(...args),
+            step: (...args) => step(...args),
             stop: (...args) => this.stop(...args),
             pause: (...args) => this.pause(...args),
             resume: (...args) => this.resume(...args),
-            console: console,
             context: this
         };
     }

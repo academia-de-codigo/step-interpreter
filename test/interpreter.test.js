@@ -37,7 +37,7 @@ describe('interpreter', function() {
         `;
 
             const interpreter = new Interpreter();
-            setTimeout(() => interpreter.stop(), 500);
+            setTimeout(() => interpreter.stop(), 200);
             await expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 

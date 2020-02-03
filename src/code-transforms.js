@@ -38,7 +38,9 @@ function stepInjector(babel) {
                 path.node.async = true;
             },
             ArrowFunctionExpression(path) {
+                path.node.async = true;
                 implicitToExplicitReturnFunction(babel, path);
+                path.skip();
             },
             ReturnStatement(path) {
                 prependContextCall(babel, path);
