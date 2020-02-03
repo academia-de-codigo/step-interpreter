@@ -29,7 +29,6 @@ describe('interpreter', function() {
             const code = `
             while(true) {
                 await wait(5);
-                
             }
 
             async function wait(ms) {
@@ -38,11 +37,11 @@ describe('interpreter', function() {
         `;
 
             const interpreter = new Interpreter();
-            setTimeout(() => interpreter.stop(), 100);
-            return expect(interpreter.run(code)).to.eventually.be.fulfilled;
+            setTimeout(() => interpreter.stop(), 500);
+            await expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
-        it('.run() should be able to work after stopping', async function() {
+        it('.run() should be able to run more code after stopping', async function() {
             const code = `
             await wait(15);
             await wait(15);
