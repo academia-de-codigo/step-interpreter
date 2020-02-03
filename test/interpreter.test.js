@@ -28,11 +28,7 @@ describe('interpreter', function() {
         it('.run() should return a promise that fulfills when execution is terminated by the user', async function() {
             const code = `
             while(true) {
-                await wait(5);
-            }
-
-            async function wait(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
+                const a = 1;
             }
         `;
 
@@ -43,41 +39,35 @@ describe('interpreter', function() {
 
         it('.run() should be able to run more code after stopping', async function() {
             const code = `
-            await wait(15);
-            await wait(15);
-            await wait(15);
-            await wait(15);
-
-            async function wait(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
+            const TIMES = 5;
+            for (let i = 0; i < TIMES; i++) {
+                const a = 1;
             }
         `;
 
             const interpreter = new Interpreter();
-            setTimeout(() => interpreter.stop(), 20);
+            setTimeout(() => interpreter.stop(), 100);
             await expect(interpreter.run(code)).to.eventually.be.fulfilled;
             await expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
         it('.run() should be able to execute async code top-level', async function() {
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const code = `
-            await wait(100);
-
-            async function wait(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
-            }
+            const a = 1;
+            await sleep(100);
+            const b = 2;
         `;
 
-            const interpreter = new Interpreter();
+            const interpreter = new Interpreter({ context: { sleep } });
             return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
         it('.run() promise should never fulfill if execution is paused', async function() {
             const code = `
-            await wait(50);
-
-            async function wait(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
+            const TIMES = 5;
+            for (let i = 0; i < TIMES; i++) {
+                const a = 1;
             }
         `;
             const interpreter = new Interpreter();
