@@ -40,7 +40,6 @@ function stepInjector(babel) {
             ArrowFunctionExpression(path) {
                 path.node.async = true;
                 implicitToExplicitReturnFunction(babel, path);
-                path.skip();
             },
             ReturnStatement(path) {
                 prependContextCall(babel, path);
@@ -136,5 +135,6 @@ function implicitToExplicitReturnFunction(babel, path) {
     const body = t.blockStatement([stepCall, returnStatement]);
     const { async: isAsync } = path.node;
 
-    return path.replaceWith(t.arrowFunctionExpression(params, body, isAsync));
+    path.replaceWith(t.arrowFunctionExpression(params, body, isAsync));
+    path.skip();
 }
