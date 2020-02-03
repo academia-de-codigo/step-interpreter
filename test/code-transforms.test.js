@@ -14,10 +14,34 @@ describe('code-transforms', function() {
             const output = /async function main\(\) \{.+\}/s;
             expect(prepare(input)).to.match(output);
         });
-        it('should transform normal functions into async functions', function() {
+        it('should transform named functions into async functions', function() {
             const input = `function test() {}`;
             const output = `async function test() {}`;
             expect(prepare(input)).to.include(output);
+        });
+        it('should transform named arrow functions into async functions', function() {
+            const input = `const test = () => {}`;
+            const output = `const test = async () => {}`;
+            expect(prepare(input)).to.include(output);
+        });
+        it('should transform anonymous functions into async functions', function() {
+            const input = `array.map(function(element) {
+                return element;
+            })`;
+            const output = /async function\s*\(element\)\s*\{.+\}/s;
+            expect(prepare(input)).to.match(output);
+        });
+        it('should transform anonymous arrow functions into async functions', function() {
+            const input = `array.map(element => {
+                return element;
+            })`;
+            const output = /async\s*element\s*=>\s*\{.+\}/s;
+            expect(prepare(input)).to.match(output);
+        });
+        it('should transform anonymous arrow functions with implicit return into async functions', function() {
+            const input = `array.map(element => element);`;
+            const output = /async\s*element\s*=>\s*.+/s;
+            expect(prepare(input)).to.match(output);
         });
     });
 
