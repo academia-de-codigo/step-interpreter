@@ -8,14 +8,13 @@ const Stepper = require('./stepper');
 class Interpreter {
     constructor(options = {}) {
         const { stepTime = 15, on = {}, context = {} } = options;
+
         this.getStepper = stepperFactory(this, { stepTime });
         this.stepper = this.getStepper();
 
         this.context = new Context(this, context);
         this.events = new EventEmitter();
 
-        this.context.on('start', () => this.events.emit('start'));
-        this.context.on('exit', () => this.events.emit('exit'));
         this.on('start', on.start);
         this.on('step', on.step);
         this.on('exit', on.exit);
@@ -30,11 +29,17 @@ class Interpreter {
         return () => this.events.off(event, handler);
     }
 
-    async run(code) {
+    async run(code, { initialize = async () => {} } = {}) {
         const transformedCode = prepare(code);
         const executor = vm.runInNewContext(
-            transformedCode,
-            this.context.getInterpreterContext()
+            `
+            __initialize__(this);
+            ${transformedCode}
+            `,
+            {
+                ...this.context.getInterpreterContext(),
+                __initialize__: contextSetup(initialize)
+            }
         );
 
         try {
@@ -68,6 +73,8 @@ class Interpreter {
     }
 }
 
+module.exports = Interpreter;
+
 function stepperFactory(interpreter, options) {
     let stepper;
     let stepDisposer;
@@ -85,4 +92,36 @@ function stepperFactory(interpreter, options) {
     };
 }
 
-module.exports = Interpreter;
+function contextSetup(initialize = () => {}) {
+    return context => {
+        const { Array } = context;
+        Array.prototype.reduce = reduce;
+        Array.prototype.forEach = forEach;
+        Array.prototype.filter = filter;
+        initialize(context);
+    };
+}
+
+async function reduce(reducer, initialValue) {
+    const { reduce } = Array.prototype;
+    return reduce.call(
+        this,
+        async (acc, ...args) => {
+            acc = await acc;
+            return await reducer(acc, ...args);
+        },
+        initialValue
+    );
+}
+
+async function forEach(fn, boundTo = this) {
+    for (let i = 0; i < this.length; i++) {
+        await fn.call(boundTo, this[i], i, this);
+    }
+}
+
+async function filter(fn) {
+    for (let i = 0; i < this.length; i++) {
+        await fn(this[i], i, this);
+    }
+}

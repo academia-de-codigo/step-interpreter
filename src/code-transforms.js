@@ -42,6 +42,10 @@ function stepInjector(babel) {
             },
             ReturnStatement(path) {
                 prependContextCall(babel, path);
+
+                if (!t.isAwaitExpression(path.node.argument)) {
+                    path.node.argument = t.awaitExpression(path.node.argument);
+                }
             },
             Loop(path) {
                 prependContextCall(babel, path);
@@ -57,6 +61,22 @@ function stepInjector(babel) {
 
                 prependContextCall(babel, path);
             },
+            CallExpression(path) {
+                if (t.isAwaitExpression(path.parent)) {
+                    return;
+                }
+
+                if (path.node.arguments) {
+                    path.node.arguments = path.node.arguments.map(arg => {
+                        if (t.isCallExpression(arg)) {
+                            return t.awaitExpression(arg);
+                        }
+                        return arg;
+                    });
+                }
+
+                path.replaceWith(t.awaitExpression(path.node));
+            },
             ExpressionStatement(path) {
                 if (
                     t.isAwaitExpression(path.node.expression) &&
@@ -66,6 +86,7 @@ function stepInjector(babel) {
                     path.skip();
                     return;
                 }
+
                 prependContextCall(babel, path);
             }
         }
@@ -103,7 +124,14 @@ function implicitToExplicitReturnFunction(babel, path) {
     }
 
     const { params } = path.node;
-    const body = t.blockStatement([t.returnStatement(path.node.body)]);
+
+    const stepCall = createContextCall(
+        babel,
+        'step',
+        generate.default(path.node.body).code
+    );
+    const returnStatement = t.returnStatement(path.node.body);
+    const body = t.blockStatement([stepCall, returnStatement]);
     const { async: isAsync } = path.node;
 
     return path.replaceWith(t.arrowFunctionExpression(params, body, isAsync));
