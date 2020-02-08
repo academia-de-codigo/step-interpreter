@@ -213,6 +213,40 @@ describe('interpreter', function() {
             expect(callback).to.have.been.called;
         });
     });
+    describe('async array operations', function() {
+        it('should provide async version of Array.prototype.map', async function() {
+            const verifier = sinon.fake();
+            const code = `
+                const array = [1,2,3];
+                const transformed = array.map(async element => {
+                    return element;
+                });
+                verifier(transformed);
+            `;
+
+            const interpreter = new Interpreter({ context: { verifier } });
+            await interpreter.run(code);
+            expect(verifier).to.have.been.calledWithExactly([1, 2, 3]);
+        });
+        it('should provide async version of Array.prototype.forEach', async function() {
+            const callback = sinon.fake();
+            const verifier = sinon.fake();
+            const code = `
+                const array = [1,2,3];
+
+                array.forEach(async element => callback(element));
+                verifier();
+            `;
+
+            const interpreter = new Interpreter({
+                context: { callback, verifier }
+            });
+            await interpreter.run(code);
+            expect(verifier).to.have.been.calledAfter(callback);
+            expect(callback).to.not.have.been.calledAfter(verifier);
+        });
+    });
+
     describe('context tests', function() {
         it('should be able to call outside function', async function() {
             const callback = sinon.fake();

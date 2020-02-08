@@ -103,6 +103,7 @@ function contextSetup(initialize = () => {}) {
         context.Error = Error;
         context.setTimeout = setTimeout;
         context.console = console;
+        Array.prototype.map = map;
         Array.prototype.reduce = reduce;
         Array.prototype.forEach = forEach;
         Array.prototype.filter = filter;
@@ -132,4 +133,13 @@ async function filter(fn) {
     for (let i = 0; i < this.length; i++) {
         await fn(this[i], i, this);
     }
+}
+
+async function map(mapper) {
+    const result = [];
+    for (let i = 0; i < this.length; i++) {
+        result.push(await mapper(this[i], i, this));
+    }
+
+    return result;
 }
