@@ -43,6 +43,21 @@ describe('code-transforms', function() {
             const output = /async\s*element\s*=>\s*.+/s;
             expect(prepare(input)).to.match(output);
         });
+        it('should wrap function calls with await', function() {
+            const input = `hello('world')`;
+            const output = `await hello('world');`;
+            expect(prepare(input)).to.include(output);
+        });
+        it('should wrap "method" calls with await', function() {
+            const input = `console.log()`;
+            const output = `await console.log();`;
+            expect(prepare(input)).to.include(output);
+        });
+        it('should wrap argument function calls with await', function() {
+            const input = `console.log(hello('world'), goodbye('world'));`;
+            const output = `await console.log((await hello('world')), (await goodbye('world')));`;
+            expect(prepare(input)).to.include(output);
+        });
     });
 
     describe('step injection', function() {

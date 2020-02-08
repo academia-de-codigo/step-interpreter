@@ -81,14 +81,12 @@ function stepInjector(babel) {
                     return;
                 }
 
-                if (path.node.arguments) {
-                    path.node.arguments = path.node.arguments.map(arg => {
-                        if (t.isCallExpression(arg)) {
-                            return t.awaitExpression(arg);
-                        }
-                        return arg;
-                    });
-                }
+                path.node.arguments = path.node.arguments.map(arg => {
+                    if (t.isCallExpression(arg)) {
+                        return t.awaitExpression(arg);
+                    }
+                    return arg;
+                });
 
                 path.replaceWith(t.awaitExpression(path.node));
             },
@@ -129,10 +127,6 @@ function prependContextCall(babel, path) {
 
 function implicitToExplicitReturnFunction(babel, path) {
     const { types: t } = babel;
-
-    if (!t.isArrowFunctionExpression(path.node)) {
-        return;
-    }
 
     if (t.isBlockStatement(path.node.body)) {
         return;

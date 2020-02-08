@@ -219,7 +219,7 @@ describe('interpreter', function() {
             const code = `
                 const array = [1,2,3];
                 const transformed = array.map(async element => {
-                    return element;
+                    return await (element + 0);
                 });
                 verifier(transformed);
             `;
