@@ -245,6 +245,18 @@ describe('interpreter', function() {
             expect(verifier).to.have.been.calledAfter(callback);
             expect(callback).to.not.have.been.calledAfter(verifier);
         });
+        it('should provide async version of Array.prototype.filter', async function() {
+            const verifier = sinon.fake();
+            const code = `
+                const array = [1,2,3];
+                const filtered = array.filter(async element => element > 5);
+                verifier(filtered);
+            `;
+
+            const interpreter = new Interpreter({ context: { verifier } });
+            await interpreter.run(code);
+            expect(verifier).to.have.been.calledOnceWithExactly([]);
+        });
     });
 
     describe('context tests', function() {

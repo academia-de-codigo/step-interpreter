@@ -130,9 +130,16 @@ async function forEach(fn, boundTo = this) {
 }
 
 async function filter(fn) {
+    const result = [];
     for (let i = 0; i < this.length; i++) {
-        await fn(this[i], i, this);
+        const pass = await fn(this[i], i, this);
+
+        if (pass) {
+            result.push(this[i]);
+        }
     }
+
+    return result;
 }
 
 async function map(mapper) {
