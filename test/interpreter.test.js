@@ -257,6 +257,18 @@ describe('interpreter', function() {
             await interpreter.run(code);
             expect(verifier).to.have.been.calledOnceWithExactly([]);
         });
+        it('should provide async version of Array.prototype.reduce', async function() {
+            const verifier = sinon.fake();
+            const code = `
+                const array = [1,2,3];
+                const sum = array.reduce(async (acc, element) => acc + element);
+                verifier(sum);
+            `;
+
+            const interpreter = new Interpreter({ context: { verifier } });
+            await interpreter.run(code);
+            expect(verifier).to.have.been.calledOnceWithExactly(6);
+        });
     });
 
     describe('context tests', function() {

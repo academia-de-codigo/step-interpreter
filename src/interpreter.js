@@ -113,14 +113,20 @@ function contextSetup(initialize = () => {}) {
 
 async function reduce(reducer, initialValue) {
     const { reduce } = Array.prototype;
-    return reduce.call(
-        this,
-        async (acc, ...args) => {
-            acc = await acc;
-            return await reducer(acc, ...args);
-        },
-        initialValue
-    );
+
+    const wrappedReducer = async (acc, ...args) => {
+        acc = await acc;
+        return await reducer(acc, ...args);
+    };
+
+    // this is necessary because using .call(this, reducer, undefined)
+    // calls reduce with explicit 'undefined' as second argument
+    // calling the reducer for the first time with accumulator = undefined
+    const args = initialValue
+        ? [wrappedReducer, initialValue]
+        : [wrappedReducer];
+
+    return reduce.apply(this, args);
 }
 
 async function forEach(fn, boundTo = this) {
