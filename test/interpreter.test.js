@@ -1,3 +1,4 @@
+const { performance } = require('perf_hooks');
 const sinon = require('sinon');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
@@ -141,6 +142,26 @@ describe('interpreter', function() {
             setTimeout(() => interpreter.stop(), 200);
             await expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
+
+        it('should be able to control step time while running', async function() {
+            const INITIAL_STEP_TIME = 100;
+
+            const code = `
+            for (let i = 0; i < 2; i++) {
+                const a = 1;
+            }
+        `;
+
+            const interpreter = new Interpreter({
+                stepTime: INITIAL_STEP_TIME
+            });
+            setTimeout(() => interpreter.setStepTime(1), 10);
+            const before = performance.now();
+            await expect(interpreter.run(code)).to.eventually.be.fulfilled;
+            const after = performance.now();
+
+            expect(before - after).to.be.lessThan(INITIAL_STEP_TIME * 2);
+        });
     });
     describe('events', function() {
         it('should call on.start event', async function() {
@@ -249,13 +270,13 @@ describe('interpreter', function() {
             const verifier = sinon.fake();
             const code = `
                 const array = [1,2,3];
-                const filtered = array.filter(async element => element > 5);
+                const filtered = array.filter(async element => element < 2);
                 verifier(filtered);
             `;
 
             const interpreter = new Interpreter({ context: { verifier } });
             await interpreter.run(code);
-            expect(verifier).to.have.been.calledOnceWithExactly([]);
+            expect(verifier).to.have.been.calledOnceWithExactly([1]);
         });
         it('should provide async version of Array.prototype.reduce', async function() {
             const verifier = sinon.fake();
