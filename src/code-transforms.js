@@ -8,7 +8,8 @@ exports.prepare = prepare;
 function toES2015(code) {
     return Babel.transform(code, {
         presets: ['es2015'],
-        plugins: [asyncToPromise]
+        plugins: [asyncToPromise],
+        sourceType: 'script'
     }).code;
 }
 
@@ -17,10 +18,11 @@ function prepare(code) {
 async function main() {
     ${
         Babel.transform(code, {
+            plugins: [stepInjector],
             parserOpts: {
                 allowAwaitOutsideFunction: true
             },
-            plugins: [stepInjector]
+            sourceType: 'script'
         }).code
     }
 }

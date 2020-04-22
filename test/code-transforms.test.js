@@ -119,6 +119,16 @@ describe('code-transforms', function() {
             const step = 'await step(`element + 1`);';
             expect(prepare(input)).to.include(step);
         });
+        it('should inject step calls inside with blocks', async function() {
+            const input = `
+            with (context) {
+                const a = [1, 2];
+            }
+            `;
+
+            const step = 'await step(`const a = [1, 2];`);';
+            expect(prepare(input)).to.include(step);
+        });
     });
     describe('es2015 transpilation', function() {
         it('should be able to transpile to es2015', async function() {
