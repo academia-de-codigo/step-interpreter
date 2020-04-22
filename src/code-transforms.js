@@ -83,7 +83,7 @@ function stepInjector(babel) {
                     return;
                 }
 
-                path.node.arguments = path.node.arguments.map(arg => {
+                path.node.arguments = path.node.arguments.map((arg) => {
                     if (t.isCallExpression(arg)) {
                         return t.awaitExpression(arg);
                     }

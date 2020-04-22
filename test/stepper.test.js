@@ -9,15 +9,15 @@ const { expect } = chai;
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-describe('stepper', function() {
-    describe('setup', function() {
-        it('should be able to be built without args', function() {
+describe('stepper', function () {
+    describe('setup', function () {
+        it('should be able to be built without args', function () {
             const buildStepper = () => new Stepper();
             expect(buildStepper).to.not.throw();
         });
     });
-    describe('stepping', function() {
-        it('should resolve in configured step time', async function() {
+    describe('stepping', function () {
+        it('should resolve in configured step time', async function () {
             const stepTime = 50;
             // rename this variable
             const allowedDifferenceMs = 10;
@@ -35,7 +35,7 @@ describe('stepper', function() {
             );
         });
 
-        it('should be able to be destroyed', async function() {
+        it('should be able to be destroyed', async function () {
             const stepTime = 200;
             const stepper = new Stepper({ stepTime });
 
@@ -49,7 +49,7 @@ describe('stepper', function() {
             expect(after - before).to.be.lessThan(stepTime);
         });
 
-        it('should not be able to step again after being destroyed', async function() {
+        it('should not be able to step again after being destroyed', async function () {
             const stepTime = 200;
             const stepper = new Stepper({ stepTime });
 
@@ -70,7 +70,7 @@ describe('stepper', function() {
             );
         });
 
-        it('should be able to be paused', async function() {
+        it('should be able to be paused', async function () {
             // pausing the stepper for a bigger time than its step time
             // should be enough to understand if it has indeed been paused
             // we use a small stepTime and a big pauseTime and make sure
@@ -93,7 +93,7 @@ describe('stepper', function() {
             expect(after - before).to.be.greaterThan(pauseForMs);
         });
 
-        it('should be able to be destroyed while paused', async function() {
+        it('should be able to be destroyed while paused', async function () {
             const stepTime = 50;
             const stepper = new Stepper({ stepTime });
 
@@ -109,7 +109,7 @@ describe('stepper', function() {
             expect(after - before).to.be.greaterThan(stepTime);
         });
 
-        it('pausing multiple times should have no effect', async function() {
+        it('pausing multiple times should have no effect', async function () {
             const stepTime = 20;
             const stepper = new Stepper({ stepTime });
 
@@ -130,7 +130,7 @@ describe('stepper', function() {
             expect(after - before).to.be.greaterThan(pauseForMs);
         });
 
-        it('resuming multiple times should have no effect', async function() {
+        it('resuming multiple times should have no effect', async function () {
             const stepTime = 20;
             const stepper = new Stepper({ stepTime });
 
@@ -152,8 +152,8 @@ describe('stepper', function() {
         });
     });
 
-    describe('events', function() {
-        it('should emit step event', async function() {
+    describe('events', function () {
+        it('should emit step event', async function () {
             const stepTime = 5;
             const stepper = new Stepper({ stepTime });
             const callback = sinon.fake();

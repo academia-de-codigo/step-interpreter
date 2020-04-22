@@ -1,6 +1,6 @@
 {
     "name": "step-interpreter",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Executes code in a (unsafe) sandboxed environment, instruction by instruction, with configurable speed.",
     "main": "./index.js",
     "repository": "https://github.com/pantoninho/step-interpreter",

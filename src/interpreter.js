@@ -56,24 +56,24 @@ class Interpreter {
 
             throw adaptError(err);
         } finally {
-            this.steppers = this.steppers.filter(s => s !== stepper);
+            this.steppers = this.steppers.filter((s) => s !== stepper);
         }
     }
 
     resume() {
-        this.steppers.forEach(s => s.resume());
+        this.steppers.forEach((s) => s.resume());
     }
 
     pause() {
-        this.steppers.forEach(s => s.pause());
+        this.steppers.forEach((s) => s.pause());
     }
 
     stop() {
-        this.steppers.forEach(s => s.destroy());
+        this.steppers.forEach((s) => s.destroy());
     }
 
     setStepTime(ms) {
-        this.steppers.forEach(s => s.setStepTime(ms));
+        this.steppers.forEach((s) => s.setStepTime(ms));
     }
 }
 
@@ -97,7 +97,7 @@ function stepperFactory(interpreter, options) {
 }
 
 function contextSetup(initialize = () => {}) {
-    return context => {
+    return (context) => {
         const { Array } = context;
         context.Promise = Promise;
         context.Error = Error;
