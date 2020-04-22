@@ -3,11 +3,14 @@ const sinon = require('sinon');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const sinonChai = require('sinon-chai');
+const sinonChaiInOrder = require('sinon-chai-in-order').default;
+
 const Interpreter = require('../src/interpreter');
 
 const { expect } = chai;
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
+chai.use(sinonChaiInOrder);
 
 describe('interpreter', function() {
     describe('execution', function() {
@@ -161,6 +164,47 @@ describe('interpreter', function() {
             const after = performance.now();
 
             expect(before - after).to.be.lessThan(INITIAL_STEP_TIME * 2);
+        });
+
+        it('should be able to execute code in parallel', async function() {
+            const logger = sinon.fake();
+            const parallel = sinon.spy((...fns) =>
+                Promise.all(fns.map(f => f()))
+            );
+
+            const code = `
+                function thread1() {
+                    logger('thread1:starting')
+                    let times = 10;
+                    while(times > 0) {
+                        times--;
+                    }
+                    logger('thread1:ending')
+                }
+
+                function thread2() {
+                    logger('thread2:starting')
+                    logger('thread2:ending')
+                }
+
+                logger('starting');
+                parallel(thread1, thread2);
+                logger('ending');
+            `;
+
+            const interpreter = new Interpreter({
+                context: { logger, parallel }
+            });
+
+            await interpreter.run(code);
+            expect(parallel).to.have.been.called;
+            expect(logger)
+                .inOrder.to.have.been.calledWith('starting')
+                .subsequently.calledWith('thread1:starting')
+                .subsequently.calledWith('thread2:starting')
+                .subsequently.calledWith('thread2:ending')
+                .subsequently.calledWith('thread1:ending')
+                .subsequently.calledWith('ending');
         });
     });
     describe('events', function() {
