@@ -122,6 +122,8 @@ function contextSetup(initialize = () => {}) {
         Array.prototype.reduce = reduce;
         Array.prototype.forEach = forEach;
         Array.prototype.filter = filter;
+        Array.prototype.find = find;
+
         initialize(context);
     };
 }
@@ -170,4 +172,14 @@ async function map(mapper) {
     }
 
     return result;
+}
+
+async function find(finder) {
+    for (let i = 0; i < this.length; i++) {
+        const found = await finder(this[i], i, this);
+
+        if (found) {
+            return this[i];
+        }
+    }
 }

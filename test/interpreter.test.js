@@ -215,7 +215,7 @@ describe('interpreter', function () {
                 .subsequently.calledWith('thread1:ending')
                 .subsequently.calledWith('ending');
         });
-        it('should be able to something', async function () {
+        it('should be able to wait before all active listeners are finished', async function () {
             const eventHandler = sinon.fake();
             const emptyStack = sinon.fake();
             const executionEnd = sinon.fake();
@@ -373,6 +373,18 @@ describe('interpreter', function () {
             const interpreter = new Interpreter({ context: { verifier } });
             await interpreter.run(code);
             expect(verifier).to.have.been.calledOnceWithExactly(6);
+        });
+        it('should provide async version of Array.prototype.find', async function () {
+            const verifier = sinon.fake();
+            const code = `
+                const array = [1,2,3];
+                const found = array.find(async element => element === 2);
+                verifier(found);
+            `;
+
+            const interpreter = new Interpreter({ context: { verifier } });
+            await interpreter.run(code);
+            expect(verifier).to.have.been.calledOnceWithExactly(2);
         });
     });
 
