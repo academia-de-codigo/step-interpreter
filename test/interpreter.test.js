@@ -29,6 +29,15 @@ describe('interpreter', function () {
             return expect(interpreter.run(code)).to.eventually.be.fulfilled;
         });
 
+        it('.run() should return a promise that does not fulfill while there are active listeners', async function () {
+            const code = `on('something', () => {});`;
+
+            const interpreter = new Interpreter();
+            const promise = interpreter.run(code);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            expect(promise).to.not.be.fulfilled;
+        });
+
         it('.run() should return a promise that fulfills when execution is terminated by the user', async function () {
             const code = `
             while(true) {
@@ -206,6 +215,29 @@ describe('interpreter', function () {
                 .subsequently.calledWith('thread1:ending')
                 .subsequently.calledWith('ending');
         });
+        it('should be able to something', async function () {
+            const eventHandler = sinon.fake();
+            const emptyStack = sinon.fake();
+            const executionEnd = sinon.fake();
+            const code = `
+                once('test', eventHandler);
+                emptyStack();
+            `;
+
+            const interpreter = new Interpreter({
+                context: { eventHandler, emptyStack },
+                on: { exit: executionEnd }
+            });
+
+            await interpreter.run(code, {
+                onEmptyStack: () => interpreter.emit('test')
+            });
+            expect(emptyStack).to.have.been.called;
+            expect(eventHandler).to.have.been.called;
+            expect(executionEnd).to.have.been.called;
+            expect(eventHandler).to.have.been.calledAfter(emptyStack);
+            expect(executionEnd).to.have.been.calledAfter(eventHandler);
+        });
     });
     describe('events', function () {
         it('should call on.start event', async function () {
@@ -277,12 +309,12 @@ describe('interpreter', function () {
         });
         it('should be able to emit events from outside', async function () {
             const callback = sinon.fake();
-            const code = `on('test', callback)`;
+            const code = `once('test', callback)`;
 
             const interpreter = new Interpreter({ context: { callback } });
-            await interpreter.run(code);
-            interpreter.emit('test');
-
+            await interpreter.run(code, {
+                onEmptyStack: () => interpreter.emit('test')
+            });
             expect(callback).to.have.been.called;
         });
     });

@@ -32,7 +32,10 @@ class Interpreter {
         this.context.events.emit(event, arg);
     }
 
-    async run(code, { initialize = async () => {} } = {}) {
+    async run(
+        code,
+        { initialize = async () => {}, onEmptyStack = () => {} } = {}
+    ) {
         const stepper = this.getStepper();
         this.steppers.push(stepper);
         const step = async (...args) => stepper.step(...args);
@@ -48,11 +51,17 @@ class Interpreter {
         `;
 
         const executor = vm.runInNewContext(transformedCode, context);
+        this.events.emit('start');
+        this.context.registeredHandlers.increment();
 
         try {
-            this.events.emit('start');
             await executor();
-            this.events.emit('end');
+            this.context.registeredHandlers.decrement();
+            onEmptyStack();
+
+            if (this.context.registeredHandlers.length > 0) {
+                await this.context.registeredHandlers.onEmptyPromise;
+            }
         } catch (err) {
             if (err === 'stepper-destroyed') {
                 return;
@@ -61,6 +70,7 @@ class Interpreter {
             throw adaptError(err);
         } finally {
             this.steppers = this.steppers.filter((s) => s !== stepper);
+            this.events.emit('end');
         }
     }
 
@@ -74,6 +84,7 @@ class Interpreter {
 
     stop() {
         this.steppers.forEach((s) => s.destroy());
+        this.context.registeredHandlers.reset();
     }
 
     setStepTime(ms) {
