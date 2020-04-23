@@ -67,8 +67,8 @@ function withHandlerCounter(events, handlerCounter) {
 
         once(event, handler) {
             handlerCounter.increment();
-            events.once(event, () => {
-                handler();
+            events.once(event, async () => {
+                await handler();
                 handlerCounter.decrement();
             });
             return () => events.off(event, handler);
