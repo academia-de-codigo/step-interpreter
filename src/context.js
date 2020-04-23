@@ -56,7 +56,7 @@ class Context {
             _map: Array.map,
             _reduce: Array.reduce,
             _forEach: Array.forEach,
-            context: this
+            _context: this
         };
     }
 }

@@ -35,14 +35,19 @@ class Interpreter {
 
     async run(
         code,
-        { initialize = async () => {}, onEmptyStack = () => {} } = {}
+        {
+            initialize = async () => {},
+            onEmptyStack = () => {},
+            context = {}
+        } = {}
     ) {
         const stepper = this.getStepper();
         this.steppers.push(stepper);
         const step = async (...args) => stepper.step(...args);
 
-        const context = {
+        context = {
             ...this.context.getInterpreterContext(step),
+            ...context,
             __initialize__: contextSetup(initialize)
         };
 
