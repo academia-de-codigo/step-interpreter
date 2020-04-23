@@ -1,4 +1,5 @@
 const EventEmitter = require('eventemitter3');
+const regeneratorRuntime = require('regenerator-runtime');
 
 class Context {
     constructor(interpreter, userContext = {}) {
@@ -36,6 +37,7 @@ class Context {
     getInterpreterContext(step) {
         return {
             ...this.userContext,
+            regeneratorRuntime,
             on: (...args) => this.on(...args),
             off: (...args) => this.off(...args),
             once: (...args) => this.once(...args),
