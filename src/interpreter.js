@@ -2,18 +2,17 @@ const vm = require('vm');
 const EventEmitter = require('eventemitter3');
 const { prepare } = require('./code-transforms');
 const { adaptError } = require('./error-adapters');
-const Context = require('./context');
+const { createContext, contextSetup } = require('./context');
 const Stepper = require('./stepper');
-const { AsyncArrayPrototype } = require('./async-array-operations');
 
 class Interpreter {
     constructor(options = {}) {
         const { stepTime = 15, on = {}, context = {} } = options;
 
-        this.getStepper = stepperFactory(this, { stepTime });
         this.steppers = [];
-        this.context = new Context(this, context);
         this.events = new EventEmitter();
+        this.getStepper = stepperFactory(this, { stepTime });
+        this.context = createContext(this, context);
 
         this.on('start', on.start);
         this.on('step', on.step);
@@ -29,8 +28,8 @@ class Interpreter {
         return () => this.events.off(event, handler);
     }
 
-    emit(event, arg) {
-        this.context.events.emit(event, arg);
+    emit(event, data) {
+        this.context.emit(event, data);
     }
 
     async run(
@@ -43,12 +42,15 @@ class Interpreter {
     ) {
         const stepper = this.getStepper();
         this.steppers.push(stepper);
-        const step = async (...args) => stepper.step(...args);
 
         context = {
-            ...this.context.getInterpreterContext(step),
-            ...context,
-            __initialize__: contextSetup(initialize)
+            __initialize__: (ctx) => {
+                contextSetup(ctx);
+                initialize(ctx);
+            },
+            step: async (...args) => stepper.step(...args),
+            ...this.context,
+            ...context
         };
 
         const transformedCode = `
@@ -58,15 +60,13 @@ class Interpreter {
 
         const executor = vm.runInNewContext(transformedCode, context);
         this.events.emit('start');
-        this.context.registeredHandlers.increment();
 
         try {
             await executor();
-            this.context.registeredHandlers.decrement();
             onEmptyStack();
 
-            if (this.context.registeredHandlers.length > 0) {
-                await this.context.registeredHandlers.onEmptyPromise;
+            if (context._getActiveListeners().length > 0) {
+                await context._getActiveListeners().onEmptyPromise;
             }
         } catch (err) {
             if (err === 'stepper-destroyed') {
@@ -90,7 +90,7 @@ class Interpreter {
 
     stop() {
         this.steppers.forEach((s) => s.destroy());
-        this.context.registeredHandlers.reset();
+        this.context._getActiveListeners().reset();
     }
 
     setStepTime(ms) {
@@ -114,19 +114,5 @@ function stepperFactory(interpreter, options) {
         );
 
         return stepper;
-    };
-}
-
-function contextSetup(initialize = () => {}) {
-    return (context) => {
-        context.Promise = Promise;
-        context.Error = Error;
-        context.setTimeout = setTimeout;
-        context.console = console;
-        Object.keys(AsyncArrayPrototype).forEach((key) => {
-            context.Array.prototype[key] = AsyncArrayPrototype[key];
-        });
-
-        initialize(context);
     };
 }

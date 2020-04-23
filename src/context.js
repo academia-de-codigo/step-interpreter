@@ -1,127 +1,39 @@
-const EventEmitter = require('eventemitter3');
 const regeneratorRuntime = require('regenerator-runtime');
-const { Array } = require('./async-array-operations');
+const { AsyncArrayPrototype, Array } = require('./async-array-operations');
+const ContextEvents = require('./context-events');
 
-class Context {
-    constructor(interpreter, userContext = {}) {
-        this.events = new EventEmitter();
-        this.interpreter = interpreter;
-        this.userContext = userContext;
-        this.registeredHandlers = handlerCounter(() => this.events.emit('end'));
-    }
-
-    on(event, handler) {
-        this.events.on(event, handler);
-        return () => this.off(event, handler);
-    }
-
-    once(event, handler) {
-        this.events.once(event, handler);
-        return () => this.off(event, handler);
-    }
-
-    off(event, handler) {
-        this.events.off(event, handler);
-    }
-
-    stop() {
-        this.interpreter.stop();
-    }
-
-    pause() {
-        this.interpreter.pause();
-    }
-
-    resume() {
-        this.interpreter.resume();
-    }
-
-    getInterpreterContext(step) {
-        const { on, off, once } = withHandlerCounter(
-            this,
-            this.registeredHandlers
-        );
-        return {
-            ...this.userContext,
-            regeneratorRuntime,
-            on,
-            off,
-            once,
-            step: (...args) => step(...args),
-            stop: (...args) => this.stop(...args),
-            pause: (...args) => this.pause(...args),
-            resume: (...args) => this.resume(...args),
-            _find: Array.find,
-            _filter: Array.filter,
-            _map: Array.map,
-            _reduce: Array.reduce,
-            _forEach: Array.forEach,
-            _context: this
-        };
-    }
-}
-
-module.exports = Context;
-
-function withHandlerCounter(events, handlerCounter) {
-    return {
-        on(event, handler) {
-            handlerCounter.increment();
-            events.on(event, handler);
-            return () => events.off(event, handler);
-        },
-
-        once(event, handler) {
-            handlerCounter.increment();
-            events.once(event, async () => {
-                await handler();
-                handlerCounter.decrement();
-            });
-            return () => events.off(event, handler);
-        },
-
-        off(event, handler) {
-            events.off(event, handler);
-            handlerCounter.decrement();
-        }
-    };
-}
-
-function handlerCounter(onEmpty = () => {}) {
-    let count = 0;
-    let onEmptyResolvers = [];
-
-    const callOnEmptyHandlers = () => {
-        onEmpty();
-        onEmptyResolvers.forEach((r) => r());
-        onEmptyResolvers = [];
-    };
+const createContext = (interpreter, userContext = {}) => {
+    const events = new ContextEvents();
 
     return {
-        increment() {
-            count++;
-        },
-        decrement() {
-            count--;
-
-            if (count === 0) {
-                callOnEmptyHandlers();
-            }
-        },
-        onEmpty(callback) {
-            onEmpty = callback;
-        },
-        reset() {
-            callOnEmptyHandlers();
-            count = 0;
-        },
-        get onEmptyPromise() {
-            return new Promise((resolve) => {
-                onEmptyResolvers.push(resolve);
-            });
-        },
-        get length() {
-            return count;
-        }
+        regeneratorRuntime,
+        stop: () => interpreter.stop(),
+        pause: () => interpreter.pause(),
+        resume: () => interpreter.resume(),
+        on: (event, handler) => events.on(event, handler),
+        once: (event, handler) => events.once(event, handler),
+        off: (event, handler) => events.off(event, handler),
+        emit: (event, data) => events.emit(event, data),
+        _getActiveListeners: () => events.activeListeners,
+        _find: Array.find,
+        _filter: Array.filter,
+        _map: Array.map,
+        _reduce: Array.reduce,
+        _forEach: Array.forEach,
+        _context: this,
+        ...userContext
     };
-}
+};
+
+const contextSetup = (context) => {
+    context.Promise = Promise;
+    context.Error = Error;
+    context.setTimeout = setTimeout;
+    context.console = console;
+    Object.keys(AsyncArrayPrototype).forEach((key) => {
+        context.Array.prototype[key] = AsyncArrayPrototype[key];
+    });
+};
+
+exports.createContext = createContext;
+exports.contextSetup = contextSetup;

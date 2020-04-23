@@ -318,7 +318,7 @@ describe('interpreter', function () {
             expect(callback).to.have.been.called;
         });
     });
-    describe.only('async array operations', function () {
+    describe('async array operations', function () {
         it('should provide async version of Array.prototype.map', async function () {
             const verifier = sinon.fake();
             const code = `
