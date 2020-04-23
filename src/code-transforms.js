@@ -1,14 +1,12 @@
 const Babel = require('@babel/standalone');
 const generate = require('@babel/generator');
-const asyncToPromise = require('babel-plugin-transform-async-to-promises');
 
 exports.toES2015 = toES2015;
 exports.prepare = prepare;
 
 function toES2015(code) {
     return Babel.transform(code, {
-        presets: ['es2015'],
-        plugins: [asyncToPromise],
+        presets: ['env'],
         sourceType: 'script'
     }).code;
 }
