@@ -318,12 +318,12 @@ describe('interpreter', function () {
             expect(callback).to.have.been.called;
         });
     });
-    describe('async array operations', function () {
+    describe.only('async array operations', function () {
         it('should provide async version of Array.prototype.map', async function () {
             const verifier = sinon.fake();
             const code = `
                 const array = [1,2,3];
-                const transformed = array.map(async element => {
+                const transformed = array.map(element => {
                     return await (element + 0);
                 });
                 verifier(transformed);
@@ -339,7 +339,7 @@ describe('interpreter', function () {
             const code = `
                 const array = [1,2,3];
 
-                array.forEach(async element => callback(element));
+                array.forEach(element => callback(element));
                 verifier();
             `;
 
@@ -354,7 +354,7 @@ describe('interpreter', function () {
             const verifier = sinon.fake();
             const code = `
                 const array = [1,2,3];
-                const filtered = array.filter(async element => element < 2);
+                const filtered = array.filter(element => element < 2);
                 verifier(filtered);
             `;
 
@@ -366,7 +366,7 @@ describe('interpreter', function () {
             const verifier = sinon.fake();
             const code = `
                 const array = [1,2,3];
-                const sum = array.reduce(async (acc, element) => acc + element);
+                const sum = array.reduce((acc, element) => acc + element);
                 verifier(sum);
             `;
 
@@ -378,13 +378,35 @@ describe('interpreter', function () {
             const verifier = sinon.fake();
             const code = `
                 const array = [1,2,3];
-                const found = array.find(async element => element === 2);
+                const found = array.find(element => element === 2);
                 verifier(found);
             `;
 
             const interpreter = new Interpreter({ context: { verifier } });
             await interpreter.run(code);
             expect(verifier).to.have.been.calledOnceWithExactly(2);
+        });
+        it('should provide async versions of array operations as globals for usage with external arrays', async function () {
+            const verifier = sinon.fake();
+            const array = [1, 2, 3];
+            const code = `
+                const found = _find(element => element === 2, array);
+                const mapped = _map(element => element + 1, array);
+                const filtered = _filter(element => element > 1, array);
+                const reduced = _reduce((acc, element) => element + acc, 0, array);
+                verifier(found, mapped, filtered, reduced);
+            `;
+
+            const interpreter = new Interpreter({
+                context: { verifier, array }
+            });
+            await interpreter.run(code);
+            expect(verifier).to.have.been.calledOnceWithExactly(
+                2,
+                [2, 3, 4],
+                [2, 3],
+                6
+            );
         });
     });
 

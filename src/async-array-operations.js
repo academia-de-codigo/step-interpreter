@@ -1,12 +1,30 @@
 exports.AsyncArrayPrototype = {
-    map,
+    map(mapper) {
+        return map(mapper, this);
+    },
+    reduce(reducer, initialValue) {
+        return reduce(reducer, initialValue, this);
+    },
+    forEach(fn) {
+        return forEach(fn, this);
+    },
+    filter(fn) {
+        return filter(fn, this);
+    },
+    find(fn) {
+        return find(fn, this);
+    }
+};
+
+exports.Array = {
     reduce,
     forEach,
     filter,
+    map,
     find
 };
 
-async function reduce(reducer, initialValue) {
+async function reduce(reducer, initialValue, array) {
     const { reduce } = Array.prototype;
 
     const wrappedReducer = async (acc, ...args) => {
@@ -21,43 +39,43 @@ async function reduce(reducer, initialValue) {
         ? [wrappedReducer, initialValue]
         : [wrappedReducer];
 
-    return reduce.apply(this, args);
+    return reduce.apply(array, args);
 }
 
-async function forEach(fn, boundTo = this) {
-    for (let i = 0; i < this.length; i++) {
-        await fn.call(boundTo, this[i], i, this);
+async function forEach(fn, array) {
+    for (let i = 0; i < array.length; i++) {
+        await fn.call(null, array[i], i, array);
     }
 }
 
-async function filter(fn) {
+async function filter(fn, array) {
     const result = [];
-    for (let i = 0; i < this.length; i++) {
-        const pass = await fn(this[i], i, this);
+    for (let i = 0; i < array.length; i++) {
+        const pass = await fn(array[i], i, array);
 
         if (pass) {
-            result.push(this[i]);
+            result.push(array[i]);
         }
     }
 
     return result;
 }
 
-async function map(mapper) {
+async function map(mapper, array) {
     const result = [];
-    for (let i = 0; i < this.length; i++) {
-        result.push(await mapper(this[i], i, this));
+    for (let i = 0; i < array.length; i++) {
+        result.push(await mapper(array[i], i, array));
     }
 
     return result;
 }
 
-async function find(finder) {
-    for (let i = 0; i < this.length; i++) {
-        const found = await finder(this[i], i, this);
+async function find(finder, array) {
+    for (let i = 0; i < array.length; i++) {
+        const found = await finder(array[i], i, array);
 
         if (found) {
-            return this[i];
+            return array[i];
         }
     }
 }

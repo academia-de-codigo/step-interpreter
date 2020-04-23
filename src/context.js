@@ -1,5 +1,6 @@
 const EventEmitter = require('eventemitter3');
 const regeneratorRuntime = require('regenerator-runtime');
+const { Array } = require('./async-array-operations');
 
 class Context {
     constructor(interpreter, userContext = {}) {
@@ -50,6 +51,11 @@ class Context {
             stop: (...args) => this.stop(...args),
             pause: (...args) => this.pause(...args),
             resume: (...args) => this.resume(...args),
+            _find: Array.find,
+            _filter: Array.filter,
+            _map: Array.map,
+            _reduce: Array.reduce,
+            _forEach: Array.forEach,
             context: this
         };
     }
