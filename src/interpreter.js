@@ -28,8 +28,8 @@ class Interpreter {
         return () => this.events.off(event, handler);
     }
 
-    emit(event) {
-        this.context.events.emit(event);
+    emit(event, arg) {
+        this.context.events.emit(event, arg);
     }
 
     async run(code, { initialize = async () => {} } = {}) {
@@ -92,8 +92,8 @@ function stepperFactory(interpreter, options) {
             stepDisposer();
         }
         stepper = new Stepper(options);
-        stepDisposer = stepper.on('step', () =>
-            interpreter.events.emit('step')
+        stepDisposer = stepper.on('step', (...args) =>
+            interpreter.events.emit('step', ...args)
         );
 
         return stepper;

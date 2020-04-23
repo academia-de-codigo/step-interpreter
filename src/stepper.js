@@ -13,12 +13,12 @@ class Stepper {
         return () => this.events.off(event, handler);
     }
 
-    async step() {
+    async step(expr) {
         if (this.destroyed) {
             throw 'stepper-destroyed';
         }
 
-        this.events.emit('step');
+        this.events.emit('step', expr);
         this.currentStep = wait(this.stepTime);
 
         try {

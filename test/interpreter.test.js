@@ -222,18 +222,16 @@ describe('interpreter', function () {
             await interpreter.run(code);
             expect(callback).to.have.been.called;
         });
-        it('should call on.step event', async function () {
+        it('should fire on.step event with next expression', async function () {
             const callback = sinon.fake();
-            const code = `
-            const firstStep = 1;
-            `;
+            const code = `const firstStep = 1;`;
 
             const interpreter = new Interpreter({
                 on: { step: callback }
             });
 
             await interpreter.run(code);
-            expect(callback).to.have.been.called;
+            expect(callback).to.have.been.calledWith('const firstStep = 1;');
         });
         it('should call on.step event 2 times', async function () {
             const callback = sinon.fake();
@@ -277,7 +275,7 @@ describe('interpreter', function () {
             await interpreter.run(code);
             expect(callback).to.have.been.called;
         });
-        it.only('should be able to emit events from outside', async function () {
+        it('should be able to emit events from outside', async function () {
             const callback = sinon.fake();
             const code = `on('test', callback)`;
 

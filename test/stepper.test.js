@@ -153,14 +153,14 @@ describe('stepper', function () {
     });
 
     describe('events', function () {
-        it('should emit step event', async function () {
+        it('should emit step event with arguments', async function () {
             const stepTime = 5;
             const stepper = new Stepper({ stepTime });
             const callback = sinon.fake();
             stepper.on('step', callback);
 
-            await stepper.step();
-            expect(callback).to.have.been.called;
+            await stepper.step('expression');
+            expect(callback).to.have.been.calledWith('expression');
         });
     });
 });
