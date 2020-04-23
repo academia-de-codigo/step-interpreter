@@ -28,6 +28,10 @@ class Interpreter {
         return () => this.events.off(event, handler);
     }
 
+    emit(event) {
+        this.context.events.emit(event);
+    }
+
     async run(code, { initialize = async () => {} } = {}) {
         const stepper = this.getStepper();
         this.steppers.push(stepper);

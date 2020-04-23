@@ -277,6 +277,16 @@ describe('interpreter', function () {
             await interpreter.run(code);
             expect(callback).to.have.been.called;
         });
+        it.only('should be able to emit events from outside', async function () {
+            const callback = sinon.fake();
+            const code = `on('test', callback)`;
+
+            const interpreter = new Interpreter({ context: { callback } });
+            await interpreter.run(code);
+            interpreter.emit('test');
+
+            expect(callback).to.have.been.called;
+        });
     });
     describe('async array operations', function () {
         it('should provide async version of Array.prototype.map', async function () {
