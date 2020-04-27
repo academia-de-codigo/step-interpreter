@@ -54,6 +54,7 @@ class Stepper {
     }
 
     async destroy() {
+        this.events.removeAllListeners();
         this.destroyed = true;
 
         if (this.currentStep) {

@@ -1,118 +1,123 @@
+const regeneratorRuntime = require('regenerator-runtime');
+const { withHandlerCounter } = require('./handler-counter');
 const vm = require('vm');
 const EventEmitter = require('eventemitter3');
 const { prepare } = require('./code-transforms');
 const { adaptError } = require('./error-adapters');
-const { createContext, contextSetup } = require('./context');
+const { Array } = require('./async-array-operations');
+const { contextSetup } = require('./context');
 const Stepper = require('./stepper');
 
-class Interpreter {
-    constructor(options = {}) {
-        const { stepTime = 15, on = {}, context = {} } = options;
+const Emitter = () => {
+    const events = new EventEmitter();
 
-        this.steppers = [];
-        this.events = new EventEmitter();
-        this.getStepper = stepperFactory(this, { stepTime });
-        this.context = createContext(this, context);
-
-        this.on('start', on.start);
-        this.on('step', on.step);
-        this.on('end', on.exit);
-    }
-
-    on(event, handler) {
-        if (typeof handler !== 'function') {
-            return;
+    return {
+        on(event, handler) {
+            events.on(event, handler);
+            return () => events.off(event, handler);
+        },
+        off(event, handler) {
+            return events.off(event, handler);
+        },
+        once(event, handler) {
+            events.on(event, handler);
+            return () => events.off(event, handler);
+        },
+        emit(event, data) {
+            events.emit(event, data);
         }
+    };
+};
 
-        this.events.on(event, handler);
-        return () => this.events.off(event, handler);
-    }
+const run = (code = '', options = {}) => {
+    const { stepTime = 15, on = {}, context: userContext = {} } = options;
+    const events = Emitter();
 
-    emit(event, data) {
-        this.context.emit(event, data);
-    }
+    const stepper = new Stepper({ stepTime });
+    const stepEventPipe = (data) => events.emit('step', data);
+    const stepEventPipeDisposer = stepper.on('step', stepEventPipe);
 
-    async run(
-        code,
-        {
-            initialize = async () => {},
-            onEmptyStack = () => {},
-            context = {}
-        } = {}
-    ) {
-        const stepper = this.getStepper();
-        this.steppers.push(stepper);
+    on.start && events.on('start', on.start);
+    on.step && events.on('step', on.step);
+    on.exit && events.on('end', on.exit);
 
-        context = {
-            __initialize__: (ctx) => {
-                contextSetup(ctx);
-                initialize(ctx);
+    const stepController = {
+        stop: () => {
+            stepEventPipeDisposer();
+            stepper.destroy();
+        },
+        pause: () => stepper.pause(),
+        resume: () => stepper.resume(),
+        setStepTime: (ms) => stepper.setStepTime(ms)
+    };
+
+    const contextEvents = withHandlerCounter(events);
+    const context = {
+        regeneratorRuntime,
+        _find: Array.find,
+        _filter: Array.filter,
+        _map: Array.map,
+        _reduce: Array.reduce,
+        _forEach: Array.forEach,
+        __initialize__: contextSetup,
+        Promise,
+        step: async (...args) => stepper.step(...args),
+        ...contextEvents,
+        ...stepController,
+        ...userContext
+    };
+
+    const { activeHandlers } = contextEvents;
+    activeHandlers.onEmptyPromise
+        .then(() => events.emit('end'))
+        .catch(() => events.emit('end'));
+
+    const executionController = (execution) => ({
+        ...stepController,
+        on: (event, handler) => events.on(event, handler),
+        off: (event, handler) => events.off(event, handler),
+        once: (event, handler) => events.once(event, handler),
+        emit: (event) => events.emit(event),
+        promises: {
+            get executionEnd() {
+                return activeHandlers.onEmptyPromise;
             },
-            step: async (...args) => stepper.step(...args),
-            ...this.context,
-            ...context
-        };
-
-        const transformedCode = `
-        __initialize__(this);
-        ${prepare(code)}
-        `;
-
-        const executor = vm.runInNewContext(transformedCode, context);
-        this.events.emit('start');
-
-        try {
-            await executor();
-            onEmptyStack();
-
-            if (context._getActiveListeners().length > 0) {
-                await context._getActiveListeners().onEmptyPromise;
+            get emptyStack() {
+                return execution;
             }
-        } catch (err) {
+        },
+        getActiveListeners: () => activeHandlers.length
+    });
+
+    const attachControllerToPromise = (execution) => {
+        Object.assign(execution, executionController(execution));
+        return execution;
+    };
+
+    const preparedCode = `
+    __initialize__(this);
+    ${prepare(code)}
+    `;
+
+    activeHandlers.increment();
+    events.emit('start');
+
+    const execution = vm
+        .runInNewContext(preparedCode, context)()
+        .catch((err) => {
             if (err === 'stepper-destroyed') {
                 return;
             }
 
+            // makes promises.onExecutionEnd fail aswell
+            activeHandlers.reset(adaptError(err));
             throw adaptError(err);
-        } finally {
-            this.steppers = this.steppers.filter((s) => s !== stepper);
-            this.events.emit('end');
-        }
-    }
+        })
+        .finally(() => {
+            activeHandlers.decrement();
+        });
 
-    resume() {
-        this.steppers.forEach((s) => s.resume());
-    }
+    return attachControllerToPromise(execution);
+};
 
-    pause() {
-        this.steppers.forEach((s) => s.pause());
-    }
-
-    stop() {
-        this.steppers.forEach((s) => s.destroy());
-        this.context._getActiveListeners().reset();
-    }
-
-    setStepTime(ms) {
-        this.steppers.forEach((s) => s.setStepTime(ms));
-    }
-}
-
-module.exports = Interpreter;
-
-function stepperFactory(interpreter, options) {
-    let stepper;
-    let stepDisposer;
-
-    return () => {
-        if (stepDisposer) {
-            stepDisposer();
-        }
-        stepper = new Stepper(options);
-        stepDisposer = stepper.on('step', (...args) =>
-            interpreter.events.emit('step', ...args)
-        );
-
-        return stepper;
-    };
-}
+exports.run = run;
