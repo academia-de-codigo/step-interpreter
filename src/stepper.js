@@ -1,16 +1,11 @@
-const EventEmitter = require('eventemitter3');
+const EventEmitter = require('./event-emitter');
 
 class Stepper {
     constructor(options = {}) {
         const { stepTime = 100 } = options;
 
-        this.events = new EventEmitter();
+        this.events = EventEmitter();
         this.stepTime = stepTime;
-    }
-
-    on(event, handler) {
-        this.events.on(event, handler);
-        return () => this.events.off(event, handler);
     }
 
     async step(expr) {
@@ -49,12 +44,24 @@ class Stepper {
         this.pausePromise = null;
     }
 
+    on(event, handler) {
+        return this.events.on(event, handler);
+    }
+
+    off(event, handler) {
+        return this.events.off(event, handler);
+    }
+
+    once(event, handler) {
+        return this.events.once(event, handler);
+    }
+
     setStepTime(stepTime) {
         this.stepTime = stepTime;
     }
 
     async destroy() {
-        this.events.removeAllListeners();
+        this.events.destroy();
         this.destroyed = true;
 
         if (this.currentStep) {

@@ -1,4 +1,33 @@
-const { AsyncArrayPrototype } = require('./async-array-operations');
+const { AsyncArrayPrototype, Array } = require('./async-array-operations');
+const regeneratorRuntime = require('regenerator-runtime');
+const { withHandlerCounter, handlerCounter } = require('./handler-counter');
+
+const createContext = ({ events, userContext, stepper }) => {
+    const activeHandlers = handlerCounter();
+
+    return {
+        regeneratorRuntime,
+        _find: Array.find,
+        _filter: Array.filter,
+        _map: Array.map,
+        _reduce: Array.reduce,
+        _forEach: Array.forEach,
+        __initialize__: contextSetup,
+        Promise,
+        step: async (...args) => stepper.step(...args),
+        ...withHandlerCounter(events, activeHandlers),
+        _execution: {
+            stop: () => stepper.destroy(),
+            pause: () => stepper.pause(),
+            resume: () => stepper.resume(),
+            setStepTime: (ms) => stepper.setStepTime(ms),
+            activeHandlers
+        },
+        ...userContext
+    };
+};
+
+exports.createContext = createContext;
 
 const contextSetup = (context) => {
     context.Promise = Promise;

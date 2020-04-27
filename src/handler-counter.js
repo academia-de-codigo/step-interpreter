@@ -1,8 +1,5 @@
-function withHandlerCounter(events) {
-    const activeHandlers = handlerCounter();
-
+function withHandlerCounter(events, activeHandlers = handlerCounter()) {
     return {
-        activeHandlers,
         emit(event, data) {
             events.emit(event, data);
         },
@@ -74,4 +71,4 @@ function handlerCounter(onEmpty = () => {}) {
     };
 }
 
-exports.handlerCounter;
+exports.handlerCounter = handlerCounter;

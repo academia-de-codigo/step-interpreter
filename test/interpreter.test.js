@@ -181,9 +181,9 @@ describe('interpreter', function () {
             }
         `;
 
-            setTimeout(() => execution.setStepTime(1), 10);
             const before = performance.now();
             const execution = run(code, { stepTime: INITIAL_STEP_TIME });
+            setTimeout(() => execution.setStepTime(1), 10);
             await expect(execution).to.eventually.be.fulfilled;
             const after = performance.now();
 
