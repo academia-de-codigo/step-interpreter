@@ -1,3 +1,3 @@
-const Interpreter = require('./src/interpreter');
+const { run } = require('./src/interpreter');
 
-exports.Interpreter = Interpreter;
+exports.run = run;
