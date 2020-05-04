@@ -7,15 +7,36 @@ function withHandlerCounter(events, activeHandlers = handlerCounter()) {
             activeHandlers.increment();
             events.on(event, handler);
             return () => {
-                events.off(event, handler);
+                events.off(event, async () => {
+                    try {
+                        await handler();
+                    } catch (err) {
+                        if (err === 'stepper-destroyed') {
+                            return;
+                        }
+
+                        throw err;
+                    } finally {
+                        activeHandlers.decrement();
+                    }
+                });
                 activeHandlers.decrement();
             };
         },
         once(event, handler) {
             activeHandlers.increment();
             events.once(event, async () => {
-                await handler();
-                activeHandlers.decrement();
+                try {
+                    await handler();
+                } catch (err) {
+                    if (err === 'stepper-destroyed') {
+                        return;
+                    }
+
+                    throw err;
+                } finally {
+                    activeHandlers.decrement();
+                }
             });
             return () => {
                 events.off(event, handler);
