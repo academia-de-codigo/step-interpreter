@@ -1,13 +1,18 @@
 const vm = require('vm');
 const EventEmitter = require('./event-emitter');
-const { prepare } = require('./code-transforms');
+const { prepare, toES2015 } = require('./code-transforms');
 const { adaptError } = require('./error-adapters');
 const { createContext } = require('./context');
 const { createExecutionController } = require('./execution-controller');
 const Stepper = require('./stepper');
 
 const run = (code = '', options = {}) => {
-    const { stepTime = 15, on = {}, context: userContext = {} } = options;
+    const {
+        stepTime = 15,
+        on = {},
+        context: userContext = {},
+        es2015 = false
+    } = options;
     const events = EventEmitter();
 
     const stepper = new Stepper({ stepTime });
@@ -31,7 +36,7 @@ const run = (code = '', options = {}) => {
 
     const preparedCode = `
     __initialize__(this);
-    ${prepare(code)}
+    ${es2015 ? toES2015(prepare(code)) : prepare(code)}
     `;
 
     activeHandlers.increment();
