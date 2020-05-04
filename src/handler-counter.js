@@ -5,27 +5,8 @@ function withHandlerCounter(events, activeHandlers = handlerCounter()) {
         },
         on(event, handler) {
             activeHandlers.increment();
-            events.on(event, handler);
-            return () => {
-                events.off(event, async () => {
-                    try {
-                        await handler();
-                    } catch (err) {
-                        if (err === 'stepper-destroyed') {
-                            return;
-                        }
 
-                        throw err;
-                    } finally {
-                        activeHandlers.decrement();
-                    }
-                });
-                activeHandlers.decrement();
-            };
-        },
-        once(event, handler) {
-            activeHandlers.increment();
-            events.once(event, async () => {
+            const asyncHandler = async () => {
                 try {
                     await handler();
                 } catch (err) {
@@ -37,7 +18,30 @@ function withHandlerCounter(events, activeHandlers = handlerCounter()) {
                 } finally {
                     activeHandlers.decrement();
                 }
-            });
+            };
+
+            events.on(event, asyncHandler);
+            return () => {
+                events.off(event, asyncHandler);
+                activeHandlers.decrement();
+            };
+        },
+        once(event, handler) {
+            activeHandlers.increment();
+            const asyncHandler = async () => {
+                try {
+                    await handler();
+                } catch (err) {
+                    if (err === 'stepper-destroyed') {
+                        return;
+                    }
+
+                    throw err;
+                } finally {
+                    activeHandlers.decrement();
+                }
+            };
+            events.once(event, asyncHandler);
             return () => {
                 events.off(event, handler);
                 activeHandlers.decrement();
@@ -93,3 +97,17 @@ function handlerCounter(onEmpty = () => {}) {
 }
 
 exports.handlerCounter = handlerCounter;
+
+function wrapAsyncHandler(handler) {
+    return async () => {
+        try {
+            await handler();
+        } catch (err) {
+            if (err === 'stepper-destroyed') {
+                return;
+            }
+
+            throw err;
+        }
+    };
+}
