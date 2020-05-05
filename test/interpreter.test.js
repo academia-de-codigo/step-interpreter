@@ -402,5 +402,51 @@ describe('interpreter', function () {
             await execution;
             expect(callback).to.have.been.called;
         });
+        it('should be able to call created function from outside', async function () {
+            const callback = sinon.fake();
+            const code = `
+                externals.callme = function() {
+                    callback();
+                    callback();
+                    callback();
+                }
+            `;
+
+            const execution = run(code, {
+                context: { callback, externals: {} },
+                destroyStepper: false
+            });
+            const { executionEnd } = execution.promises;
+            await execution;
+            await executionEnd;
+            await execution.context.externals.callme();
+            expect(callback).to.have.been.calledThrice;
+        });
+        it('should be able to call created functions from outside', async function () {
+            const callback = sinon.fake();
+            const code = `
+            const fn1 = () => {
+                callback();
+            };
+
+            const fn2 = () => {
+                callback();
+            };
+
+            functions.push(fn1);
+            functions.push(fn2);
+            `;
+
+            const execution = run(code, {
+                context: { callback, functions: [] },
+                destroyStepper: false
+            });
+            const { executionEnd } = execution.promises;
+            await execution;
+            await executionEnd;
+            await Promise.all(execution.context.functions.map((f) => f()));
+            expect(callback).to.have.been.calledTwice;
+            execution.stop();
+        });
     });
 });

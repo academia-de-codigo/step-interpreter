@@ -16,6 +16,7 @@ const createExecutionController = ({ execution, events, context }) => {
         pause,
         resume,
         setStepTime,
+        context,
         promises: {
             get executionEnd() {
                 return activeHandlers.onEmptyPromise;

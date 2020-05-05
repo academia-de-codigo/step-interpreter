@@ -17,7 +17,10 @@ const createContext = ({ events, userContext, stepper }) => {
         step: async (...args) => stepper.step(...args),
         ...withHandlerCounter(events, activeHandlers),
         _execution: {
-            stop: () => stepper.destroy(),
+            stop: () => {
+                stepper.destroy();
+                events.destroy();
+            },
             pause: () => stepper.pause(),
             resume: () => stepper.resume(),
             setStepTime: (ms) => stepper.setStepTime(ms),

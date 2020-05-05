@@ -97,17 +97,3 @@ function handlerCounter(onEmpty = () => {}) {
 }
 
 exports.handlerCounter = handlerCounter;
-
-function wrapAsyncHandler(handler) {
-    return async () => {
-        try {
-            await handler();
-        } catch (err) {
-            if (err === 'stepper-destroyed') {
-                return;
-            }
-
-            throw err;
-        }
-    };
-}

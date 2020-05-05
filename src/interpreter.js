@@ -11,7 +11,8 @@ const run = (code = '', options = {}) => {
         stepTime = 15,
         on = {},
         context: userContext = {},
-        es2015 = false
+        es2015 = false,
+        destroyStepper = true
     } = options;
     const events = EventEmitter();
 
@@ -30,8 +31,11 @@ const run = (code = '', options = {}) => {
         .then(() => events.emit('end'))
         .catch(() => events.emit('end'))
         .finally(() => {
-            stepEventPipeDisposer();
-            events.destroy();
+            if (destroyStepper) {
+                stepEventPipeDisposer();
+                events.destroy();
+                stepper.destroy();
+            }
         });
 
     const preparedCode = `
