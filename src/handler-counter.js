@@ -15,8 +15,6 @@ function withHandlerCounter(events, activeHandlers = handlerCounter()) {
                     }
 
                     throw err;
-                } finally {
-                    activeHandlers.decrement();
                 }
             };
 
