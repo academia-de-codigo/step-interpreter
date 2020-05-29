@@ -6,9 +6,9 @@ function withHandlerCounter(events, activeHandlers = handlerCounter()) {
         on(event, handler) {
             activeHandlers.increment();
 
-            const asyncHandler = async () => {
+            const asyncHandler = async (...args) => {
                 try {
-                    await handler();
+                    await handler(...args);
                 } catch (err) {
                     if (err === 'stepper-destroyed') {
                         return;
@@ -26,9 +26,9 @@ function withHandlerCounter(events, activeHandlers = handlerCounter()) {
         },
         once(event, handler) {
             activeHandlers.increment();
-            const asyncHandler = async () => {
+            const asyncHandler = async (...args) => {
                 try {
-                    await handler();
+                    await handler(...args);
                 } catch (err) {
                     if (err === 'stepper-destroyed') {
                         return;
