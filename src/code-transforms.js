@@ -11,7 +11,17 @@ function toES2015(code) {
     }).code;
 }
 
-function prepare(code) {
+function prepare(code, { sync = false } = {}) {
+    if (sync) {
+        return `
+function main() {
+    ${code}
+}
+        
+main;
+        `;
+    }
+
     return `
 async function main() {
     ${

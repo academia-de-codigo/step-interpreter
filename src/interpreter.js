@@ -12,7 +12,8 @@ const run = (code = '', options = {}) => {
         on = {},
         context: userContext = {},
         es2015 = false,
-        destroyStepper = true
+        destroyStepper = true,
+        sync = false
     } = options;
     const events = EventEmitter();
 
@@ -40,11 +41,17 @@ const run = (code = '', options = {}) => {
 
     const preparedCode = `
     __initialize__(this);
-    ${es2015 ? toES2015(prepare(code)) : prepare(code)}
+    ${es2015 ? toES2015(prepare(code, { sync })) : prepare(code, { sync })}
     `;
 
     activeHandlers.increment();
     events.emit('start');
+
+    if (sync) {
+        vm.runInNewContext(preparedCode, context)();
+        activeHandlers.decrement();
+        return;
+    }
 
     const execution = vm
         .runInNewContext(preparedCode, context)()
