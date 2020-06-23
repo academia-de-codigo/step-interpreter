@@ -1,4 +1,4 @@
-const vm = require('vm');
+const VM = require('context-eval');
 const EventEmitter = require('./event-emitter');
 const { prepare, toES2015 } = require('./code-transforms');
 const { adaptError } = require('./error-adapters');
@@ -36,6 +36,7 @@ const run = (code = '', options = {}) => {
                 stepEventPipeDisposer();
                 events.destroy();
                 stepper.destroy();
+                vm.destroy();
             }
         });
 
@@ -48,13 +49,16 @@ const run = (code = '', options = {}) => {
     events.emit('start');
 
     if (sync) {
-        vm.runInNewContext(preparedCode, context)();
+        const vm = new VM(context);
+        vm.evaluate(preparedCode)();
+        vm.destroy();
         activeHandlers.decrement();
         return;
     }
 
+    const vm = new VM(context);
     const execution = vm
-        .runInNewContext(preparedCode, context)()
+        .evaluate(preparedCode)()
         .catch((err) => {
             if (err === 'stepper-destroyed') {
                 return;
