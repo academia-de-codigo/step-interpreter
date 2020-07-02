@@ -11,7 +11,7 @@ const createExecutionController = ({ execution, events, context }) => {
         on: (event, handler) => events.on(event, handler),
         off: (event, handler) => events.off(event, handler),
         once: (event, handler) => events.once(event, handler),
-        emit: (event) => events.emit(event),
+        emit: (event, data) => events.emit(event, data),
         stop,
         pause,
         resume,

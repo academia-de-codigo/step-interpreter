@@ -304,6 +304,25 @@ describe('interpreter', function () {
             execution.emit('test');
             expect(callback).to.have.been.called;
         });
+        it('should be able to pass arguments from emitted events', async function () {
+            const callback = sinon.fake();
+            const eventArg = 'test';
+            const code = `
+		function resolve(arg) {
+		    callback(arg); 
+	    	}
+
+		once('test', arg => {
+                    resolve(arg)}
+                )
+	`;
+
+            const execution = run(code, { context: { callback } });
+            await execution;
+            execution.emit('test', eventArg);
+            await execution.promises.executionEnd;
+            expect(callback).to.have.been.calledWith(eventArg);
+        });
     });
     describe('async array operations', function () {
         it('should provide async version of Array.prototype.map', async function () {
