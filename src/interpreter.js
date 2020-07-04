@@ -19,6 +19,7 @@ const run = (code = '', options = {}) => {
 
     const stepper = new Stepper({ stepTime });
     const context = createContext({ events, userContext, stepper });
+    const vm = new VM(context);
 
     const stepEventPipe = (data) => events.emit('step', data);
     const stepEventPipeDisposer = stepper.on('step', stepEventPipe);
@@ -49,14 +50,11 @@ const run = (code = '', options = {}) => {
     events.emit('start');
 
     if (sync) {
-        const vm = new VM(context);
         vm.evaluate(preparedCode)();
-        vm.destroy();
         activeHandlers.decrement();
         return;
     }
 
-    const vm = new VM(context);
     const execution = vm
         .evaluate(preparedCode)()
         .catch((err) => {

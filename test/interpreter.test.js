@@ -246,6 +246,28 @@ describe('interpreter', function () {
             expect(eventHandler).to.have.been.called;
             expect(eventHandler).to.have.been.calledAfter(emptyStack);
         });
+
+        it('sync mode support', async function () {
+            var NR_CALLS = 20;
+            var callback = sinon.fake();
+            var finalCallback = sinon.fake();
+
+            const code = `
+                for(var i = 0; i < NR_CALLS; i++) {
+                    callback();
+                }
+
+                finalCallback();
+            `;
+
+            const execution = run(code, {
+                sync: true,
+                context: { NR_CALLS, callback, finalCallback }
+            });
+            expect(execution).to.be.undefined;
+            expect(finalCallback).to.have.been.calledOnce;
+            expect(callback).to.have.callCount(NR_CALLS);
+        });
     });
     describe('events', function () {
         it('should call on.start event', async function () {
