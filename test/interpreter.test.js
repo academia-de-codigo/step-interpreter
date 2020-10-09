@@ -47,8 +47,8 @@ describe('interpreter', function () {
 
         it('onExecutionEndPromise should only be fulfilled when there are no more active event handlers', async function () {
             const code = `
-            const dispose = on('hanging', () => {});
-            once('dispose', dispose);
+            const dispose = events.on('hanging', () => {});
+            events.once('dispose', dispose);
           `;
 
             const execution = run(code);
@@ -231,7 +231,7 @@ describe('interpreter', function () {
             const eventHandler = sinon.fake();
             const emptyStack = sinon.fake();
             const code = `
-                once('test', eventHandler);
+                events.once('test', eventHandler);
                 emptyStack();
             `;
 
@@ -319,7 +319,7 @@ describe('interpreter', function () {
         });
         it('should be able to emit events from outside', async function () {
             const callback = sinon.fake();
-            const code = `once('test', callback)`;
+            const code = `events.once('test', callback)`;
 
             const execution = run(code, { context: { callback } });
             await execution;
@@ -334,7 +334,7 @@ describe('interpreter', function () {
 		    callback(arg); 
 	    	}
 
-		once('test', arg => {
+		events.once('test', arg => {
                     resolve(arg)}
                 )
 	`;

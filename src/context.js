@@ -15,7 +15,7 @@ const createContext = ({ events, userContext, stepper }) => {
         __initialize__: contextSetup,
         Promise,
         step: async (...args) => stepper.step(...args),
-        ...withHandlerCounter(events, activeHandlers),
+        events: withHandlerCounter(events, activeHandlers),
         _execution: {
             stop: () => {
                 stepper.destroy();
