@@ -6,15 +6,35 @@
 
 Sandboxed javascript interpreter that is able to run at configurable speed.
 
-TODO README
+
+API:
+
+```
+const { run } = require('step-interpreter');
+const code = `console.log('hello world!')`;
+
+// default options
+const options = {
+    stepTime: 15,
+    context: {},
+    es2015: false,
+    sync: false
+};
+
+await run(code, options);
+```
 
 Example usage:
 
 ```
-const { createInterpreter } = require('step-interpreter');
+const { run } = require('step-interpreter');
 
 const code = `
     const a = 1;
+
+    events.once('test', () => {
+        console.log('received test event!');
+    })
 
     for (let i = 0; i < 5; i++) {
         console.log(sum(a, i));
@@ -24,38 +44,38 @@ const code = `
         return a + b;
     }
 
-    console.log('done inside interpreter');
+    externalFunction();
+    console.log('interpreter done executing');
 `;
 
-async function run() {
-    const interpreter = createInterpreter({
-        stepTime: 100,
-        context: { console }
+(async () => {
+    const execution = run(code, {
+        stepTime: 300,
+        context: {
+            externalFunction: () =>
+                console.log('external function has been called!')
+        }
     });
-
-    const unsubscribe = interpreter.on(
-        'step',
-        code => console.log('going to run....', code)
-    );
-
-    interpreter.expose({ console });
+    execution.on('step', (code) => console.log('executing: ', code));
 
     setTimeout(() => {
         console.log('pausing interpreter...');
-        interpreter.pause();
-    }, 1500);
+        execution.pause();
+    }, 1000);
 
     setTimeout(() => {
-        console.log('unsubscribing stepper...');
-        unsubscribe();
         console.log('resuming interpreter...');
-        interpreter.resume();
-        console.log('setting step interval to 10');
-        interpreter.setStepInterval(10);
+        execution.resume();
     }, 3000);
 
-    await interpreter.run(code);
-}
-
-run();
+    await execution;
+    console.log('stack is now empty, but there are active event listeners..');
+    const { executionEnd } = execution.promises;
+    execution.emit('test');
+    await executionEnd;
+    console.log('execution ended');
+})();
 ```
+
+README TODOS:
+ - add option descriptions
